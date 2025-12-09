@@ -9,21 +9,72 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
+import { useLogin } from '../../hooks/useAuth';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: hook vào logic đăng nhập thực tế
+  const loginMutation = useLogin();
+
+  const handleLogin = async () => {
+    // Validation
+    if (!email.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập email');
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Lỗi', 'Email không hợp lệ');
+      return;
+    }
+
+    try {
+      const response = await loginMutation.mutateAsync({ 
+        email: email.trim(), 
+        password 
+      });
+
+      // Đăng nhập thành công
+      Alert.alert(
+        'Thành công',
+        `Chào mừng ${response.user.fullName}!`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // TODO: Navigate to Home Screen
+              // navigation.replace('Home');
+              console.log('User logged in:', response.user);
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert(
+        'Đăng nhập thất bại',
+        error.message || 'Email hoặc mật khẩu không đúng'
+      );
+    }
   };
 
   const handleGoogleLogin = () => {
-    // TODO: hook vào logic đăng nhập Google
+    // TODO: Tích hợp Google Login
+    Alert.alert('Thông báo', 'Tính năng đăng nhập Google đang được phát triển');
   };
 
   const handleForgotPassword = () => {
@@ -62,9 +113,9 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.welcomeTitle}>Chào mừng trở lại</Text>
+              <Text style={styles.welcomeTitle}>Welcome back</Text>
               <Text style={styles.welcomeSubtitle}>
-                Đăng nhập để khám phá các câu lạc bộ
+                Sign In to discover the clubs
               </Text>
             </View>
 
@@ -72,6 +123,7 @@ const LoginScreen = ({ navigation }) => {
               activeOpacity={0.8}
               style={styles.googleButtonWrapper}
               onPress={handleGoogleLogin}
+              disabled={loginMutation.isPending}
             >
               <View style={styles.googleButtonInner}>
                 <View style={styles.googleIconPlaceholder}>
@@ -97,19 +149,32 @@ const LoginScreen = ({ navigation }) => {
                 autoCapitalize="none"
                 value={email}
                 onChangeText={setEmail}
+                editable={!loginMutation.isPending}
               />
             </View>
 
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                placeholderTextColor="rgba(255,255,255,0.35)"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Enter your password"
+                  placeholderTextColor="rgba(255,255,255,0.35)"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  editable={!loginMutation.isPending}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.eyeIcon}>
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.rowBetween}>
@@ -117,6 +182,7 @@ const LoginScreen = ({ navigation }) => {
                 style={styles.rememberWrapper}
                 onPress={() => setRememberMe(!rememberMe)}
                 activeOpacity={0.8}
+                disabled={loginMutation.isPending}
               >
                 <View
                   style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
@@ -124,29 +190,45 @@ const LoginScreen = ({ navigation }) => {
                 <Text style={styles.rememberText}>Remember me</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.8}>
+              <TouchableOpacity 
+                onPress={handleForgotPassword} 
+                activeOpacity={0.8}
+                disabled={loginMutation.isPending}
+              >
                 <Text style={styles.forgotText}>Forgot password?</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
               activeOpacity={0.9}
-              style={styles.signInButtonWrapper}
+              style={[
+                styles.signInButtonWrapper,
+                loginMutation.isPending && styles.signInButtonDisabled
+              ]}
               onPress={handleLogin}
+              disabled={loginMutation.isPending}
             >
               <LinearGradient
-                colors={["#5D2DE2", "#F05BC8"]}
+                colors={loginMutation.isPending ? ["#9D8DE2", "#C09BC8"] : ["#5D2DE2", "#F05BC8"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.signInGradient}
               >
-                <Text style={styles.signInText}>Sign In</Text>
+                {loginMutation.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.signInText}>Sign In</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.footerTextWrapper}>
               <Text style={styles.footerTextNormal}>Don't have an account? </Text>
-              <TouchableOpacity onPress={handleSignUp} activeOpacity={0.8}>
+              <TouchableOpacity 
+                onPress={handleSignUp} 
+                activeOpacity={0.8}
+                disabled={loginMutation.isPending}
+              >
                 <Text style={styles.footerTextLink}>Sign up</Text>
               </TouchableOpacity>
             </View>
@@ -264,6 +346,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     backgroundColor: 'rgba(15,23,42,0.7)',
   },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.5)',
+    backgroundColor: 'rgba(15,23,42,0.7)',
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 12,
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  eyeButton: {
+    padding: 10,
+    paddingRight: 12,
+  },
+  eyeIcon: {
+    fontSize: 18,
+  },
   rowBetween: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -302,6 +406,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 18,
   },
+  signInButtonDisabled: {
+    opacity: 0.7,
+  },
   signInGradient: {
     height: 48,
     alignItems: 'center',
@@ -328,4 +435,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-

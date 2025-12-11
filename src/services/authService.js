@@ -22,20 +22,43 @@ export const authService = {
     }
   },
 
-  // Register
-  register: async (email, password, fullName) => {
+  // Register - Full payload matching API
+  register: async (payload) => {
     try {
-      const response = await api.post('/auth/register', {
+      const response = await api.post('/auth/register', payload);
+      // Registration doesn't return accessToken immediately - need OTP verification first
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Verify OTP
+  verifyOTP: async (email, otp) => {
+    try {
+      const response = await api.post('/auth/verify-otp', {
         email,
-        password,
-        fullName
+        otp,
       });
       
+      // After successful OTP verification, save tokens if provided
       if (response.accessToken) {
         await AsyncStorage.setItem('accessToken', response.accessToken);
         await AsyncStorage.setItem('user', JSON.stringify(response.user));
       }
       
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Resend OTP
+  resendOTP: async (email) => {
+    try {
+      const response = await api.post('/auth/resend-otp', {
+        email,
+      });
       return response;
     } catch (error) {
       throw error;

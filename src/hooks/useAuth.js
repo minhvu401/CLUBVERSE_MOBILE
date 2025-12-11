@@ -9,8 +9,19 @@ export const useLogin = () => {
 
 export const useRegister = () => {
   return useMutation({
-    mutationFn: ({ email, password, fullName }) => 
-      authService.register(email, password, fullName),
+    mutationFn: (payload) => authService.register(payload),
+  });
+};
+
+export const useVerifyOTP = () => {
+  return useMutation({
+    mutationFn: ({ email, otp }) => authService.verifyOTP(email, otp),
+  });
+};
+
+export const useResendOTP = () => {
+  return useMutation({
+    mutationFn: ({ email }) => authService.resendOTP(email),
   });
 };
 

@@ -1,6 +1,6 @@
-import axios from 'axios';
 import { API_BASE_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const api = axios.create({
   baseURL: API_BASE_URL || 'https://clubverse.onrender.com',

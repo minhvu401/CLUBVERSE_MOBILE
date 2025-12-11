@@ -1,6 +1,9 @@
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   Platform,
   StatusBar,
@@ -9,8 +12,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
@@ -23,6 +24,9 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const loginMutation = useLogin();
+  
+  // Use navigation hook - React Navigation provides this via context
+  const nav = useNavigation();
 
   const handleLogin = async () => {
     // Validation
@@ -44,26 +48,22 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await loginMutation.mutateAsync({ 
-        email: email.trim(), 
-        password 
+      const response = await loginMutation.mutateAsync({
+        email: email.trim(),
+        password,
       });
 
       // Đăng nhập thành công
-      Alert.alert(
-        'Thành công',
-        `Chào mừng ${response.user.fullName}!`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // TODO: Navigate to Home Screen
-              // navigation.replace('Home');
-              console.log('User logged in:', response.user);
-            },
+      Alert.alert('Thành công', `Chào mừng ${response.user.fullName}!`, [
+        {
+          text: 'OK',
+          onPress: () => {
+            // TODO: Navigate to Home Screen
+            // navigation.replace('Home');
+            console.log('User logged in:', response.user);
           },
-        ]
-      );
+        },
+      ]);
     } catch (error) {
       Alert.alert(
         'Đăng nhập thất bại',
@@ -78,20 +78,23 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleForgotPassword = () => {
-    if (navigation) {
-      navigation.navigate('ForgotPassword');
-    }
+    nav.navigate('ForgotPassword');
   };
 
   const handleSignUp = () => {
-    if (navigation) {
-      navigation.navigate('Register');
+    try {
+      console.log('handleSignUp called, navigating to Register...');
+      nav.navigate('Register');
+      console.log('Navigate called successfully');
+    } catch (error) {
+      console.error('Navigation error to Register:', error);
+      Alert.alert('Error', 'Could not navigate to Register screen');
     }
   };
 
   return (
     <LinearGradient
-      colors={["#5D2DE2", "#020721"]}
+      colors={['#5D2DE2', '#020721']}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={styles.gradient}
@@ -129,7 +132,9 @@ const LoginScreen = ({ navigation }) => {
                 <View style={styles.googleIconPlaceholder}>
                   <Text style={styles.googleIconLetter}>G</Text>
                 </View>
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <Text style={styles.googleButtonText}>
+                  Continue with Google
+                </Text>
               </View>
             </TouchableOpacity>
 
@@ -185,13 +190,16 @@ const LoginScreen = ({ navigation }) => {
                 disabled={loginMutation.isPending}
               >
                 <View
-                  style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
+                  style={[
+                    styles.checkbox,
+                    rememberMe && styles.checkboxChecked,
+                  ]}
                 />
                 <Text style={styles.rememberText}>Remember me</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                onPress={handleForgotPassword} 
+              <TouchableOpacity
+                onPress={handleForgotPassword}
                 activeOpacity={0.8}
                 disabled={loginMutation.isPending}
               >
@@ -203,13 +211,17 @@ const LoginScreen = ({ navigation }) => {
               activeOpacity={0.9}
               style={[
                 styles.signInButtonWrapper,
-                loginMutation.isPending && styles.signInButtonDisabled
+                loginMutation.isPending && styles.signInButtonDisabled,
               ]}
               onPress={handleLogin}
               disabled={loginMutation.isPending}
             >
               <LinearGradient
-                colors={loginMutation.isPending ? ["#9D8DE2", "#C09BC8"] : ["#5D2DE2", "#F05BC8"]}
+                colors={
+                  loginMutation.isPending
+                    ? ['#9D8DE2', '#C09BC8']
+                    : ['#5D2DE2', '#F05BC8']
+                }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.signInGradient}
@@ -223,9 +235,11 @@ const LoginScreen = ({ navigation }) => {
             </TouchableOpacity>
 
             <View style={styles.footerTextWrapper}>
-              <Text style={styles.footerTextNormal}>Don't have an account? </Text>
-              <TouchableOpacity 
-                onPress={handleSignUp} 
+              <Text style={styles.footerTextNormal}>
+                Do not have an account?{' '}
+              </Text>
+              <TouchableOpacity
+                onPress={handleSignUp}
                 activeOpacity={0.8}
                 disabled={loginMutation.isPending}
               >

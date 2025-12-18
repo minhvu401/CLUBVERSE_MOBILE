@@ -1,15 +1,15 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Platform,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import ClubverseLogo from '../../assets/images/clubverse-logo.png';
@@ -144,7 +144,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
             onPress={() => navigation.goBack()}
             activeOpacity={0.8}
           >
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Text style={styles.backButtonText}>← Quay lại</Text>
           </TouchableOpacity>
 
           <View style={styles.logoWrapper}>
@@ -153,9 +153,9 @@ const OTPVerificationScreen = ({ route, navigation }) => {
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.welcomeTitle}>Verify Your Email</Text>
+              <Text style={styles.welcomeTitle}>Xác thực Email của bạn</Text>
               <Text style={styles.welcomeSubtitle}>
-                We've sent a 6-digit code to{'\n'}
+                Chúng tôi đã gửi mã 6 chữ số đến{'\n'}
                 <Text style={styles.emailText}>{email}</Text>
               </Text>
             </View>
@@ -203,14 +203,14 @@ const OTPVerificationScreen = ({ route, navigation }) => {
                 {verifyOTPMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.verifyText}>Verify</Text>
+                  <Text style={styles.verifyText}>Xác thực</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.resendContainer}>
               <Text style={styles.resendText}>
-                Didn't receive the code?{' '}
+                Không nhận được mã?{' '}
                 {canResend ? (
                   <TouchableOpacity
                     onPress={handleResendOTP}
@@ -218,12 +218,12 @@ const OTPVerificationScreen = ({ route, navigation }) => {
                     activeOpacity={0.8}
                   >
                     <Text style={styles.resendLink}>
-                      {resendOTPMutation.isPending ? 'Sending...' : 'Resend'}
+                      {resendOTPMutation.isPending ? 'Đang gửi...' : 'Gửi lại'}
                     </Text>
                   </TouchableOpacity>
                 ) : (
                   <Text style={styles.timerText}>
-                    Resend in {timer}s
+                    Gửi lại sau {timer}s
                   </Text>
                 )}
               </Text>

@@ -1,70 +1,36 @@
 
+import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLogout } from '../../hooks/useAuth';
-import { authService } from '../../services/authService';
-
-const mockSoftSkillBadges = [
-  {
-    id: '1',
-    title: 'Kỹ năng Lãnh đạo Cấp 1',
-    subtitle: 'Tham gia ít nhất 1 hoạt động trong CLB',
-    date: '15/08/2025',
-    color: '#FBBF24',
-  },
-  {
-    id: '2',
-    title: 'Người đồng hành',
-    subtitle: 'Tham gia 5 sự kiện',
-    date: '20/08/2025',
-    color: '#38BDF8',
-  },
-  {
-    id: '3',
-    title: 'Học viên xuất sắc',
-    subtitle: 'Hoàn thành 3 workshop',
-    date: '10/09/2025',
-    color: '#FB7185',
-  },
-  {
-    id: '4',
-    title: 'Networking Pro',
-    subtitle: 'Kết nối với 50+ thành viên',
-    date: '05/10/2025',
-    color: '#34D399',
-  },
-];
-
-const mockSkills = [
-  { id: '1', name: 'Leadership', points: 450, max: 500 },
-  { id: '2', name: 'Communication', points: 360, max: 500 },
-  { id: '3', name: 'Teamwork', points: 510, max: 600 },
-  { id: '4', name: 'Problem Solving', points: 300, max: 500 },
-];
+import { userService } from '../../services/userService';
 
 const ProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
   const logoutMutation = useLogout();
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     let isMounted = true;
 
     const loadUser = async () => {
       try {
-        const current = await authService.getCurrentUser();
+        const profileData = await userService.getUserProfile();
         if (isMounted) {
-          setUser(current);
+          setUser(profileData);
         }
-      } catch (_error) {}
+      } catch (_error) {
+        console.error('Error loading user profile:', _error);
+      }
     };
 
     loadUser();
@@ -72,7 +38,7 @@ const ProfileScreen = ({ navigation }) => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isFocused]);
 
   const handleLogout = async () => {
     try {
@@ -83,9 +49,15 @@ const ProfileScreen = ({ navigation }) => {
     } catch (_error) {}
   };
 
-  const fullName = user?.fullName ;
-  const major = user?.major ;
-  const university = user?.school ;
+  const fullName = user?.fullName;
+  const email = user?.email;
+  const phoneNumber = user?.phoneNumber;
+  const major = user?.major;
+  const university = user?.school;
+  const description = user?.description;
+  const skills = user?.skills || [];
+  const interests = user?.interests || [];
+  const schedule = user?.schedule || {};
 
   return (
     <LinearGradient
@@ -121,103 +93,110 @@ const ProfileScreen = ({ navigation }) => {
               <TouchableOpacity
                 activeOpacity={0.8}
                 style={styles.settingsButton}
+                onPress={() => navigation?.navigate('EditProfile', { user })}
               >
                 <Text style={styles.settingsIcon}>⚙️</Text>
               </TouchableOpacity>
             </View>
-
-            <View style={styles.skillSummaryCard}>
-              <View style={styles.skillSummaryLeft}>
-                <Text style={styles.skillSummaryTitle}>Điểm kỹ năng</Text>
-                <Text style={styles.skillSummaryLevel}>Level 5</Text>
-                <Text style={styles.skillSummarySub}>250 điểm nữa để đạt Level 6</Text>
-              </View>
-              <View style={styles.skillSummaryRight}>
-                <Text style={styles.skillSummaryPoints}>1250</Text>
-                <Text style={styles.skillSummaryPointsLabel}>điểm</Text>
-              </View>
-            </View>
-
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>4</Text>
-                <Text style={styles.statLabel}>Huy hiệu</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>3</Text>
-                <Text style={styles.statLabel}>CLB</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>8</Text>
-                <Text style={styles.statLabel}>Sự kiện</Text>
-              </View>
-            </View>
           </LinearGradient>
 
           <View style={styles.sectionWrapper}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Chứng chỉ kỹ năng mềm</Text>
-              <TouchableOpacity activeOpacity={0.8}>
-                <Text style={styles.sectionActionText}>Xem tất cả</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.badgeGrid}>
-              {mockSoftSkillBadges.map((badge) => (
-                <View
-                  key={badge.id}
-                  style={[styles.badgeCard, { backgroundColor: badge.color }]}
-                >
-                  <Text style={styles.badgeTitle}>{badge.title}</Text>
-                  <Text style={styles.badgeSubtitle}>{badge.subtitle}</Text>
-                  <Text style={styles.badgeDate}>{badge.date}</Text>
+            <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
+            <View style={styles.infoCard}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Họ và tên</Text>
+                <Text style={styles.infoValue}>{fullName || 'Chưa cập nhật'}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Email</Text>
+                <Text style={styles.infoValue}>{email || 'Chưa cập nhật'}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Số điện thoại</Text>
+                <Text style={styles.infoValue}>{phoneNumber || 'Chưa cập nhật'}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Khoa/Ngành</Text>
+                <View style={styles.infoValueRow}>
+                  <Text style={styles.infoValue}>{major || 'Chưa cập nhật'}</Text>
+                  <Text style={styles.infoValue}>{user?.year ? `Năm ${user.year}` : ''}</Text>
                 </View>
-              ))}
+              </View>
+              {description && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Giới thiệu bản thân</Text>
+                  <Text style={styles.bioText}>{description}</Text>
+                </View>
+              )}
             </View>
           </View>
 
-          <View style={styles.sectionWrapper}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Kỹ năng của bạn</Text>
-            </View>
+          {(skills.length > 0 || interests.length > 0) && (
+            <View style={styles.sectionWrapper}>
+              <Text style={styles.sectionTitle}>Kỹ năng & Sở thích</Text>
 
-            <View style={styles.skillList}>
-              {mockSkills.map((skill) => {
-                const progress = skill.points / skill.max;
-                return (
-                  <View key={skill.id} style={styles.skillItem}>
-                    <View style={styles.skillRowTop}>
-                      <Text style={styles.skillName}>{skill.name}</Text>
-                      <Text style={styles.skillPoints}>{skill.points} pts</Text>
-                    </View>
-                    <View style={styles.skillProgressBackground}>
-                      <View
-                        style={[styles.skillProgressFill, { flex: progress }]}
-                      />
-                      <View
-                        style={[styles.skillProgressRemaining, { flex: 1 - progress }]}
-                      />
+              <View style={styles.skillsCard}>
+                {skills.length > 0 && (
+                  <View style={styles.tagsContainer}>
+                    <Text style={styles.tagsSectionLabel}>Kỹ năng</Text>
+                    <View style={styles.tagsWrapper}>
+                      {skills.map((skill, index) => (
+                        <View key={index} style={styles.tag}>
+                          <Text style={styles.tagText}>{skill}</Text>
+                        </View>
+                      ))}
                     </View>
                   </View>
-                );
-              })}
+                )}
+
+                {interests.length > 0 && (
+                  <View style={styles.tagsContainer}>
+                    <Text style={styles.tagsSectionLabel}>Sở thích</Text>
+                    <View style={styles.tagsWrapper}>
+                      {interests.map((interest, index) => (
+                        <View key={index} style={[styles.tag, styles.interestTag]}>
+                          <Text style={styles.tagText}>{interest}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
             </View>
-          </View>
+          )}
+
+          {schedule && Object.keys(schedule).length > 0 && (
+            <View style={styles.sectionWrapper}>
+              <Text style={styles.sectionTitle}>Lịch rảnh</Text>
+              <View style={styles.scheduleContainer}>
+                {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map((day, index) => {
+                  const dayKey = `day${index + 1}`;
+                  const slots = schedule[dayKey] || [];
+                  return (
+                    <View key={index} style={styles.scheduleDay}>
+                      <Text style={styles.scheduleDayLabel}>{day}</Text>
+                      <View style={styles.scheduleSlots}>
+                        {slots.length > 0 ? (
+                          slots.map((slot, slotIndex) => (
+                            <View key={slotIndex} style={styles.scheduleSlot}>
+                              <Text style={styles.scheduleSlotText}>{slot}</Text>
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={styles.noScheduleText}>-</Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
 
           <View style={styles.sectionWrapper}>
             <Text style={styles.sectionTitle}>Cài đặt</Text>
 
             <View style={styles.settingList}>
-              <TouchableOpacity activeOpacity={0.8} style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <Text style={styles.settingIcon}>👤</Text>
-                  <Text style={styles.settingText}>Thông tin cá nhân</Text>
-                </View>
-                <Text style={styles.settingArrow}>›</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity activeOpacity={0.8} style={styles.settingItem}>
                 <View style={styles.settingLeft}>
                   <Text style={styles.settingIcon}>🏷️</Text>
@@ -393,6 +372,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+    marginBottom: 10,
   },
   sectionActionText: {
     fontSize: 12,
@@ -501,6 +481,110 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  infoCard: {
+    backgroundColor: 'rgba(15,23,42,0.9)',
+    borderRadius: 18,
+    padding: 16,
+    gap: 14,
+  },
+  infoRow: {
+    gap: 6,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '500',
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  infoValueRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bioText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 20,
+  },
+  tagsContainer: {
+    gap: 10,
+  },
+  tagsSectionLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
+  },
+  tagsWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tag: {
+    backgroundColor: 'rgba(168, 85, 247, 0.3)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(168, 85, 247, 0.5)',
+  },
+  interestTag: {
+    backgroundColor: 'rgba(236, 72, 153, 0.3)',
+    borderColor: 'rgba(236, 72, 153, 0.5)',
+  },
+  tagText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  scheduleContainer: {
+    backgroundColor: 'rgba(15,23,42,0.9)',
+    borderRadius: 18,
+    padding: 14,
+    gap: 12,
+  },
+  scheduleDay: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  scheduleDayLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
+    width: 60,
+  },
+  scheduleSlots: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  scheduleSlot: {
+    backgroundColor: 'rgba(34, 197, 94, 0.3)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.5)',
+  },
+  scheduleSlotText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  noScheduleText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.4)',
+  },
+  skillsCard: {
+    backgroundColor: 'rgba(15,23,42,0.9)',
+    borderRadius: 18,
+    padding: 16,
+    gap: 16,
   },
 });
 

@@ -92,9 +92,9 @@ const HomeScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.headerWrapper}>
-            <Text style={styles.welcomeTitle}>Hello, {userName}! 👋</Text>
+            <Text style={styles.welcomeTitle}>Xin chào, {userName}! 👋</Text>
             <Text style={styles.welcomeSubtitle}>
-              Welcome to Clubverse
+              Chào mừng đến với Clubverse
             </Text>
           </View>
 

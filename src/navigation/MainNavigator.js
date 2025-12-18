@@ -1,28 +1,42 @@
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View } from 'react-native';
 
 import HomeScreen from '../screens/home/HomeScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
+const ProfileStack = createNativeStackNavigator();
 
 const EventsScreen = () => (
   <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Events</Text>
+    <Text style={styles.placeholderText}>Sự kiện</Text>
   </View>
 );
 
 const ExploreScreen = () => (
   <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Explore</Text>
+    <Text style={styles.placeholderText}>Khám phá</Text>
   </View>
 );
 
 const ForumScreen = () => (
   <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Forum</Text>
+    <Text style={styles.placeholderText}>Diễn đàn</Text>
   </View>
+);
+
+const ProfileStackNavigator = () => (
+  <ProfileStack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+    <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
+  </ProfileStack.Navigator>
 );
 
 const MainNavigator = () => {
@@ -37,11 +51,11 @@ const MainNavigator = () => {
         tabBarInactiveTintColor: 'rgba(255,255,255,0.7)',
         tabBarIcon: ({ focused, color }) => {
           let icon = '●';
-          if (route.name === 'Home') icon = '🏠';
-          if (route.name === 'Events') icon = '📅';
-          if (route.name === 'Explore') icon = '🧭';
-          if (route.name === 'Forum') icon = '💬';
-          if (route.name === 'Profile') icon = '👤';
+          if (route.name === 'Trang chủ') icon = '🏠';
+          if (route.name === 'Sự kiện') icon = '📅';
+          if (route.name === 'Khám phá') icon = '🧭';
+          if (route.name === 'Diễn đàn') icon = '💬';
+          if (route.name === 'Hồ sơ') icon = '👤';
 
           return (
             <Text style={[styles.tabIcon, { color: focused ? '#A855F7' : color }]}>
@@ -51,11 +65,11 @@ const MainNavigator = () => {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Events" component={EventsScreen} />
-      <Tab.Screen name="Explore" component={ExploreScreen} />
-      <Tab.Screen name="Forum" component={ForumScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Trang chủ" component={HomeScreen} />
+      <Tab.Screen name="Sự kiện" component={EventsScreen} />
+      <Tab.Screen name="Khám phá" component={ExploreScreen} />
+      <Tab.Screen name="Diễn đàn" component={ForumScreen} />
+      <Tab.Screen name="Hồ sơ" component={ProfileStackNavigator} />
     </Tab.Navigator>
   );
 };

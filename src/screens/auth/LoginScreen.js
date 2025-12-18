@@ -1,16 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Platform,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
@@ -113,9 +113,9 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.welcomeTitle}>Welcome back</Text>
+              <Text style={styles.welcomeTitle}>Chào mừng trở lại</Text>
               <Text style={styles.welcomeSubtitle}>
-                Sign In to discover the clubs
+                Đăng nhập để khám phá các câu lạc bộ
               </Text>
             </View>
 
@@ -129,21 +129,21 @@ const LoginScreen = ({ navigation }) => {
                 <View style={styles.googleIconPlaceholder}>
                   <Text style={styles.googleIconLetter}>G</Text>
                 </View>
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
               </View>
             </TouchableOpacity>
 
             <View style={styles.dividerWrapper}>
               <View style={styles.divider} />
-              <Text style={styles.dividerText}>or</Text>
+              <Text style={styles.dividerText}>hoặc</Text>
               <View style={styles.divider} />
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Email Address</Text>
+              <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder="Nhập email của bạn"
                 placeholderTextColor="rgba(255,255,255,0.35)"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -154,11 +154,11 @@ const LoginScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Password</Text>
+              <Text style={styles.fieldLabel}>Mật khẩu</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
                   style={styles.passwordInput}
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu của bạn"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   secureTextEntry={!showPassword}
                   value={password}
@@ -187,7 +187,7 @@ const LoginScreen = ({ navigation }) => {
                 <View
                   style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
                 />
-                <Text style={styles.rememberText}>Remember me</Text>
+                <Text style={styles.rememberText}>Ghi nhớ đăng nhập</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -195,7 +195,7 @@ const LoginScreen = ({ navigation }) => {
                 activeOpacity={0.8}
                 disabled={loginMutation.isPending}
               >
-                <Text style={styles.forgotText}>Forgot password?</Text>
+                <Text style={styles.forgotText}>Quên mật khẩu?</Text>
               </TouchableOpacity>
             </View>
 
@@ -217,19 +217,19 @@ const LoginScreen = ({ navigation }) => {
                 {loginMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.signInText}>Sign In</Text>
+                  <Text style={styles.signInText}>Đăng nhập</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.footerTextWrapper}>
-              <Text style={styles.footerTextNormal}>Don&apos;t have an account? </Text>
+              <Text style={styles.footerTextNormal}>Chưa có tài khoản? </Text>
               <TouchableOpacity 
                 onPress={handleSignUp} 
                 activeOpacity={0.8}
                 disabled={loginMutation.isPending}
               >
-                <Text style={styles.footerTextLink}>Sign up</Text>
+                <Text style={styles.footerTextLink}>Đăng ký</Text>
               </TouchableOpacity>
             </View>
           </View>

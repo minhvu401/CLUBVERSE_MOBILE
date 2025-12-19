@@ -2,17 +2,17 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
@@ -48,55 +48,55 @@ const RegisterScreen = () => {
 
   const validateForm = () => {
     if (!formData.fullName.trim()) {
-      Alert.alert('Error', 'Please enter your full name');
+      Alert.alert('Lỗi', 'Vui lòng nhập họ tên đầy đủ');
       return false;
     }
 
     if (!formData.email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
+      Alert.alert('Lỗi', 'Vui lòng nhập email');
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      Alert.alert('Error', 'Invalid email format');
+      Alert.alert('Lỗi', 'Định dạng email không hợp lệ');
       return false;
     }
 
     if (!formData.phoneNumber.trim()) {
-      Alert.alert('Error', 'Please enter your phone number');
+      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
       return false;
     }
 
     if (!formData.school.trim()) {
-      Alert.alert('Error', 'Please enter your school/university');
+      Alert.alert('Lỗi', 'Vui lòng nhập trường học/đại học');
       return false;
     }
 
     if (!formData.major.trim()) {
-      Alert.alert('Error', 'Please enter your major');
+      Alert.alert('Lỗi', 'Vui lòng nhập chuyên ngành');
       return false;
     }
 
     if (!formData.password.trim()) {
-      Alert.alert('Error', 'Please create a password');
+      Alert.alert('Lỗi', 'Vui lòng tạo mật khẩu');
       return false;
     }
 
     if (formData.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert('Lỗi', 'Mật khẩu không khớp');
       return false;
     }
 
     if (!agreeTerms) {
       Alert.alert(
-        'Error',
-        'Please agree to the Terms & Conditions and Privacy Policy'
+        'Lỗi',
+        'Vui lòng đồng ý với Điều khoản & Điều kiện và Chính sách Bảo mật'
       );
       return false;
     }
@@ -125,12 +125,12 @@ const RegisterScreen = () => {
         navigation.navigate('OTPVerification', { email: formData.email });
       } else {
         Alert.alert(
-          'Success',
-          'Registration successful! Please check your email for verification.'
+          'Thành công',
+          'Đăng ký thành công! Vui lòng kiểm tra email để xác thực.'
         );
       }
     } catch (error) {
-      Alert.alert('Registration Failed', error.message || 'Please try again');
+      Alert.alert('Đăng ký thất bại', error.message || 'Vui lòng thử lại');
     }
   };
 
@@ -170,11 +170,11 @@ const RegisterScreen = () => {
           <View style={styles.card}>
             {/* Full Name */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Full Name</Text>
+              <Text style={styles.fieldLabel}>Họ và tên</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your full name"
+                  placeholder="Nhập họ và tên của bạn"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   value={formData.fullName}
                   onChangeText={(value) => handleInputChange('fullName', value)}
@@ -188,7 +188,7 @@ const RegisterScreen = () => {
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your email"
+                  placeholder="Nhập email của bạn"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -200,11 +200,11 @@ const RegisterScreen = () => {
 
             {/* Phone */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Phone</Text>
+              <Text style={styles.fieldLabel}>Số điện thoại</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your phone number"
+                  placeholder="Nhập số điện thoại của bạn"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   keyboardType="phone-pad"
                   value={formData.phoneNumber}
@@ -217,11 +217,11 @@ const RegisterScreen = () => {
 
             {/* School */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>School / University</Text>
+              <Text style={styles.fieldLabel}>Trường học / Đại học</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your school"
+                  placeholder="Nhập tên trường của bạn"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   value={formData.school}
                   onChangeText={(value) => handleInputChange('school', value)}
@@ -231,11 +231,11 @@ const RegisterScreen = () => {
 
             {/* Major */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Major</Text>
+              <Text style={styles.fieldLabel}>Chuyên ngành</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your major"
+                  placeholder="Nhập chuyên ngành của bạn"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   value={formData.major}
                   onChangeText={(value) => handleInputChange('major', value)}
@@ -245,11 +245,11 @@ const RegisterScreen = () => {
 
             {/* Password */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Password</Text>
+              <Text style={styles.fieldLabel}>Mật khẩu</Text>
               <View style={[styles.inputWrapper, styles.passwordContainer]}>
                 <TextInput
                   style={[styles.input, styles.passwordInput]}
-                  placeholder="Create a password"
+                  placeholder="Tạo mật khẩu"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   secureTextEntry={!showPassword}
                   value={formData.password}
@@ -268,11 +268,11 @@ const RegisterScreen = () => {
 
             {/* Confirm Password */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Confirm Password</Text>
+              <Text style={styles.fieldLabel}>Xác nhận mật khẩu</Text>
               <View style={[styles.inputWrapper, styles.passwordContainer]}>
                 <TextInput
                   style={[styles.input, styles.passwordInput]}
-                  placeholder="Confirm your password"
+                  placeholder="Xác nhận mật khẩu của bạn"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   secureTextEntry={!showConfirmPassword}
                   value={formData.confirmPassword}
@@ -302,9 +302,9 @@ const RegisterScreen = () => {
                 {agreeTerms && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <Text style={styles.checkboxLabel}>
-                I agree to the{' '}
-                <Text style={styles.checkboxLinkText}>Terms & Conditions</Text>{' '}
-                and <Text style={styles.checkboxLinkText}>Privacy Policy</Text>
+                Tôi đồng ý với{' '}
+                <Text style={styles.checkboxLinkText}>Điều khoản & Điều kiện</Text>{' '}
+                và <Text style={styles.checkboxLinkText}>Chính sách Bảo mật</Text>
               </Text>
             </TouchableOpacity>
 
@@ -331,7 +331,7 @@ const RegisterScreen = () => {
                 {registerMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.signUpText}>Sign Up</Text>
+                  <Text style={styles.signUpText}>Đăng ký</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -339,10 +339,10 @@ const RegisterScreen = () => {
             {/* Sign In */}
             <View style={styles.footerTextWrapper}>
               <Text style={styles.footerTextNormal}>
-                Already have an account?{' '}
+                Đã có tài khoản?{' '}
               </Text>
               <TouchableOpacity onPress={handleSignIn}>
-                <Text style={styles.footerTextLink}>Sign in</Text>
+                <Text style={styles.footerTextLink}>Đăng nhập</Text>
               </TouchableOpacity>
             </View>
           </View>

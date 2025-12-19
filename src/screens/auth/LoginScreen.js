@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
@@ -25,9 +24,6 @@ const LoginScreen = ({ navigation }) => {
 
   const loginMutation = useLogin();
 
-  // Use navigation hook - React Navigation provides this via context
-  const nav = useNavigation();
-
   const handleLogin = async () => {
     // Validation
     if (!email.trim()) {
@@ -48,22 +44,26 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await loginMutation.mutateAsync({
-        email: email.trim(),
-        password,
+      const response = await loginMutation.mutateAsync({ 
+        email: email.trim(), 
+        password 
       });
 
       // Đăng nhập thành công
-      Alert.alert('Thành công', `Chào mừng ${response.user.fullName}!`, [
-        {
-          text: 'OK',
-          onPress: () => {
-            // TODO: Navigate to Home Screen
-            // navigation.replace('Home');
-            console.log('User logged in:', response.user);
+      Alert.alert(
+        'Thành công',
+        `Chào mừng ${response.user.fullName}!`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (navigation) {
+                navigation.replace('Main');
+              }
+            },
           },
-        },
-      ]);
+        ]
+      );
     } catch (error) {
       Alert.alert(
         'Đăng nhập thất bại',
@@ -78,21 +78,20 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleForgotPassword = () => {
-    nav.navigate('ForgotPassword');
+    if (navigation) {
+      navigation.navigate('ForgotPassword');
+    }
   };
 
   const handleSignUp = () => {
-    try {
-      nav.navigate('Register');
-    // eslint-disable-next-line no-unused-vars
-    } catch (error) {
-      Alert.alert('Error', 'Could not navigate to Register screen');
+    if (navigation) {
+      navigation.navigate('Register');
     }
   };
 
   return (
     <LinearGradient
-      colors={['#5D2DE2', '#020721']}
+      colors={["#5D2DE2", "#020721"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={styles.gradient}
@@ -114,9 +113,9 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.welcomeTitle}>Welcome back</Text>
+              <Text style={styles.welcomeTitle}>Chào mừng trở lại</Text>
               <Text style={styles.welcomeSubtitle}>
-                Sign In to discover the clubs
+                Đăng nhập để khám phá các câu lạc bộ
               </Text>
             </View>
 
@@ -130,23 +129,21 @@ const LoginScreen = ({ navigation }) => {
                 <View style={styles.googleIconPlaceholder}>
                   <Text style={styles.googleIconLetter}>G</Text>
                 </View>
-                <Text style={styles.googleButtonText}>
-                  Continue with Google
-                </Text>
+                <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
               </View>
             </TouchableOpacity>
 
             <View style={styles.dividerWrapper}>
               <View style={styles.divider} />
-              <Text style={styles.dividerText}>or</Text>
+              <Text style={styles.dividerText}>hoặc</Text>
               <View style={styles.divider} />
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Email Address</Text>
+              <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder="Nhập email của bạn"
                 placeholderTextColor="rgba(255,255,255,0.35)"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -157,11 +154,11 @@ const LoginScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Password</Text>
+              <Text style={styles.fieldLabel}>Mật khẩu</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
                   style={styles.passwordInput}
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu của bạn"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   secureTextEntry={!showPassword}
                   value={password}
@@ -188,20 +185,17 @@ const LoginScreen = ({ navigation }) => {
                 disabled={loginMutation.isPending}
               >
                 <View
-                  style={[
-                    styles.checkbox,
-                    rememberMe && styles.checkboxChecked,
-                  ]}
+                  style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
                 />
-                <Text style={styles.rememberText}>Remember me</Text>
+                <Text style={styles.rememberText}>Ghi nhớ đăng nhập</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={handleForgotPassword}
+              <TouchableOpacity 
+                onPress={handleForgotPassword} 
                 activeOpacity={0.8}
                 disabled={loginMutation.isPending}
               >
-                <Text style={styles.forgotText}>Forgot password?</Text>
+                <Text style={styles.forgotText}>Quên mật khẩu?</Text>
               </TouchableOpacity>
             </View>
 
@@ -209,17 +203,13 @@ const LoginScreen = ({ navigation }) => {
               activeOpacity={0.9}
               style={[
                 styles.signInButtonWrapper,
-                loginMutation.isPending && styles.signInButtonDisabled,
+                loginMutation.isPending && styles.signInButtonDisabled
               ]}
               onPress={handleLogin}
               disabled={loginMutation.isPending}
             >
               <LinearGradient
-                colors={
-                  loginMutation.isPending
-                    ? ['#9D8DE2', '#C09BC8']
-                    : ['#5D2DE2', '#F05BC8']
-                }
+                colors={loginMutation.isPending ? ["#9D8DE2", "#C09BC8"] : ["#5D2DE2", "#F05BC8"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.signInGradient}
@@ -227,21 +217,19 @@ const LoginScreen = ({ navigation }) => {
                 {loginMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.signInText}>Sign In</Text>
+                  <Text style={styles.signInText}>Đăng nhập</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.footerTextWrapper}>
-              <Text style={styles.footerTextNormal}>
-                Do not have an account?{' '}
-              </Text>
-              <TouchableOpacity
-                onPress={handleSignUp}
+              <Text style={styles.footerTextNormal}>Chưa có tài khoản? </Text>
+              <TouchableOpacity 
+                onPress={handleSignUp} 
                 activeOpacity={0.8}
                 disabled={loginMutation.isPending}
               >
-                <Text style={styles.footerTextLink}>Sign up</Text>
+                <Text style={styles.footerTextLink}>Đăng ký</Text>
               </TouchableOpacity>
             </View>
           </View>

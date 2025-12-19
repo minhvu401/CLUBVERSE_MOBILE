@@ -1,3 +1,4 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -39,6 +40,9 @@ const ClubApplicationsScreen = ({ navigation }) => {
   const [interviewDate, setInterviewDate] = useState('');
   const [interviewLocation, setInterviewLocation] = useState('');
   const [interviewNote, setInterviewNote] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [pickerDate, setPickerDate] = useState(new Date());
   const [finalDecisionModalVisible, setFinalDecisionModalVisible] = useState(false);
   const [selectedFinalDecisionAppId, setSelectedFinalDecisionAppId] = useState(null);
   const [selectedFinalDecisionUserName, setSelectedFinalDecisionUserName] = useState('');
@@ -140,7 +144,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
     }
 
     try {
-      // Format date from YYYY-MM-DD HH:mm to ISO string
+      // Validate date from YYYY-MM-DD HH:mm and convert to ISO 8601 (local time, no TZ)
       const dateStr = interviewDate.trim();
       // Match format: YYYY-MM-DD HH:mm
       const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/);
@@ -153,17 +157,51 @@ const ClubApplicationsScreen = ({ navigation }) => {
       const [, year, month, day, hour, minute] = dateMatch;
 
       // Validate date values
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
-      if (isNaN(date.getTime())) {
-        Alert.alert('Lỗi', 'Ngày phỏng vấn không hợp lệ');
+      const yearNum = parseInt(year, 10);
+      const monthNum = parseInt(month, 10);
+      const dayNum = parseInt(day, 10);
+      const hourNum = parseInt(hour, 10);
+      const minuteNum = parseInt(minute, 10);
+
+      // Basic range validation before constructing Date
+      const isValidRange =
+        monthNum >= 1 &&
+        monthNum <= 12 &&
+        dayNum >= 1 &&
+        dayNum <= 31 &&
+        hourNum >= 0 &&
+        hourNum <= 23 &&
+        minuteNum >= 0 &&
+        minuteNum <= 59;
+      if (!isValidRange) {
+        Alert.alert('Lỗi', 'Ngày phỏng vấn không hợp lệ (kiểm tra tháng/ngày/giờ/phút)');
         return;
       }
 
-      // Convert to ISO string
-      const isoDate = date.toISOString();
+      // Construct date in local time then verify components to avoid rollover (e.g., month 37)
+      const date = new Date(yearNum, monthNum - 1, dayNum, hourNum, minuteNum);
+      if (
+        isNaN(date.getTime()) ||
+        date.getFullYear() !== yearNum ||
+        date.getMonth() !== monthNum - 1 ||
+        date.getDate() !== dayNum ||
+        date.getHours() !== hourNum ||
+        date.getMinutes() !== minuteNum
+      ) {
+        Alert.alert('Lỗi', 'Ngày phỏng vấn không hợp lệ (sai định dạng hoặc giá trị)');
+        return;
+      }
+
+      // Build ISO 8601 string with local timezone offset to preserve entered time
+      const pad = (v) => v.toString().padStart(2, '0');
+      const tzOffsetMinutes = -date.getTimezoneOffset(); // reverse sign to get local offset
+      const tzSign = tzOffsetMinutes >= 0 ? '+' : '-';
+      const tzHours = pad(Math.floor(Math.abs(tzOffsetMinutes) / 60));
+      const tzMins = pad(Math.abs(tzOffsetMinutes) % 60);
+      const isoLocalWithOffset = `${pad(yearNum)}-${pad(monthNum)}-${pad(dayNum)}T${pad(hourNum)}:${pad(minuteNum)}:00${tzSign}${tzHours}:${tzMins}`;
 
       const interviewData = {
-        interviewDate: isoDate,
+        interviewDate: isoLocalWithOffset,
         interviewLocation: interviewLocation.trim(),
         interviewNote: interviewNote.trim() || undefined,
       };
@@ -282,12 +320,81 @@ const ClubApplicationsScreen = ({ navigation }) => {
     }
   };
 
+  const parseDateTime = (dateString) => {
+    if (!dateString) return null;
+
+    // Chuẩn hóa: hỗ trợ ISO đầy đủ, "YYYY-MM-DD HH:mm", "YYYY-MM-DDTHH:mm"
+    let normalized = dateString;
+    if (!normalized.includes('T') && normalized.includes(' ')) {
+      normalized = normalized.replace(' ', 'T');
+    }
+
+    const date = new Date(normalized);
+    if (isNaN(date.getTime())) return null;
+    return date;
+  };
+
+  const formatInputDateTime = (dateObj) => {
+    if (!dateObj || isNaN(dateObj.getTime())) return '';
+    const pad = (v) => v.toString().padStart(2, '0');
+    return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+  };
+
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    const date = parseDateTime(dateString);
+    if (!date) return dateString || '';
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  const formatDateTime = (dateString) => {
+    const date = parseDateTime(dateString);
+    if (!date) return dateString || '';
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
+  const handleOpenDatePicker = () => {
+    const parsed = parseDateTime(interviewDate);
+    const baseDate = parsed || new Date();
+    setPickerDate(baseDate);
+    setShowDatePicker(true);
+  };
+
+  const handleDatePicked = (event, selected) => {
+    setShowDatePicker(false);
+    if (event.type !== 'set' || !selected) return;
+    const prev = parseDateTime(interviewDate) || selected;
+    const merged = new Date(
+      selected.getFullYear(),
+      selected.getMonth(),
+      selected.getDate(),
+      prev.getHours(),
+      prev.getMinutes()
+    );
+    setPickerDate(merged);
+    setShowTimePicker(true);
+  };
+
+  const handleTimePicked = (event, selected) => {
+    setShowTimePicker(false);
+    if (event.type !== 'set' || !selected) return;
+    const base = parseDateTime(interviewDate) || pickerDate || new Date();
+    const merged = new Date(
+      base.getFullYear(),
+      base.getMonth(),
+      base.getDate(),
+      selected.getHours(),
+      selected.getMinutes()
+    );
+    setPickerDate(merged);
+    setInterviewDate(formatInputDateTime(merged));
   };
 
   const getStatusColor = (status) => {
@@ -422,409 +529,429 @@ const ClubApplicationsScreen = ({ navigation }) => {
         </View>
 
         {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#FFFFFF" />
-            </View>
-          ) : (
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.statsContainer}>
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>{stats.pending}</Text>
-                  <Text style={styles.statLabel}>Chờ duyệt</Text>
-                  <Text style={styles.statIcon}>⏰</Text>
-                </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.statsContainer}>
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{stats.pending}</Text>
+                <Text style={styles.statLabel}>Chờ duyệt</Text>
 
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>{stats.approved}</Text>
-                  <Text style={styles.statLabel}>Đã phê duyệt</Text>
-                  <Text style={styles.statIcon}>✓</Text>
-                </View>
-
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>{stats.rejected}</Text>
-                  <Text style={styles.statLabel}>Từ chối</Text>
-                  <Text style={styles.statIcon}>✗</Text>
-                </View>
-
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>{stats.total}</Text>
-                  <Text style={styles.statLabel}>Tổng đơn</Text>
-                  <Text style={styles.statIcon}>📄</Text>
-                </View>
               </View>
 
-              <View style={styles.sectionWrapper}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Đơn Đăng Ký Mới</Text>
-                  <View style={styles.filterDropdownContainer}>
-                    <TouchableOpacity
-                      style={styles.filterDropdownButton}
-                      onPress={() => setFilterDropdownVisible(!filterDropdownVisible)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.filterDropdownText}>
-                        {statusFilter === 'ALL' && 'Tất cả trạng thái'}
-                        {statusFilter === 'PENDING' && 'Chờ duyệt'}
-                        {statusFilter === 'APPROVED' && 'Đã phê duyệt'}
-                        {statusFilter === 'ACCEPTED' && 'Đã chấp nhận'}
-                        {statusFilter === 'REJECTED' && 'Đã từ chối'}
-                      </Text>
-                      <Text style={styles.filterDropdownIcon}>
-                        {filterDropdownVisible ? '▲' : '▼'}
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    {filterDropdownVisible && (
-                      <View style={styles.filterDropdownMenu}>
-                          <TouchableOpacity
-                            style={[
-                              styles.filterDropdownItem,
-                              statusFilter === 'ALL' && styles.filterDropdownItemActive,
-                            ]}
-                            onPress={() => handleFilterChange('ALL')}
-                          >
-                          <Text
-                            style={[
-                              styles.filterDropdownItemText,
-                              statusFilter === 'ALL' && styles.filterDropdownItemTextActive,
-                            ]}
-                          >
-                            Tất cả trạng thái
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.filterDropdownItem,
-                            statusFilter === 'PENDING' && styles.filterDropdownItemActive,
-                          ]}
-                          onPress={() => handleFilterChange('PENDING')}
-                        >
-                          <Text
-                            style={[
-                              styles.filterDropdownItemText,
-                              statusFilter === 'PENDING' && styles.filterDropdownItemTextActive,
-                            ]}
-                          >
-                            Chờ duyệt
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.filterDropdownItem,
-                            statusFilter === 'APPROVED' && styles.filterDropdownItemActive,
-                          ]}
-                          onPress={() => handleFilterChange('APPROVED')}
-                        >
-                          <Text
-                            style={[
-                              styles.filterDropdownItemText,
-                              statusFilter === 'APPROVED' && styles.filterDropdownItemTextActive,
-                            ]}
-                          >
-                            Đã phê duyệt
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.filterDropdownItem,
-                            statusFilter === 'ACCEPTED' && styles.filterDropdownItemActive,
-                          ]}
-                          onPress={() => handleFilterChange('ACCEPTED')}
-                        >
-                          <Text
-                            style={[
-                              styles.filterDropdownItemText,
-                              statusFilter === 'ACCEPTED' && styles.filterDropdownItemTextActive,
-                            ]}
-                          >
-                            Đã chấp nhận
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.filterDropdownItem,
-                            statusFilter === 'REJECTED' && styles.filterDropdownItemActive,
-                          ]}
-                          onPress={() => handleFilterChange('REJECTED')}
-                        >
-                          <Text
-                            style={[
-                              styles.filterDropdownItemText,
-                              statusFilter === 'REJECTED' && styles.filterDropdownItemTextActive,
-                            ]}
-                          >
-                            Đã từ chối
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{stats.approved}</Text>
+                <Text style={styles.statLabel}>Đã phê duyệt</Text>
 
-                {filteredApplications.length === 0 ? (
-                  <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>
-                      {statusFilter === 'ALL'
-                        ? 'Chưa có đơn đăng ký nào'
-                        : 'Không có đơn nào với trạng thái này'}
+              </View>
+
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{stats.rejected}</Text>
+                <Text style={styles.statLabel}>Từ chối</Text>
+              </View>
+
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{stats.total}</Text>
+                <Text style={styles.statLabel}>Tổng đơn</Text>
+              </View>
+            </View>
+
+            <View style={styles.sectionWrapper}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Đơn Đăng Ký Mới</Text>
+                <View style={styles.filterDropdownContainer}>
+                  <TouchableOpacity
+                    style={styles.filterDropdownButton}
+                    onPress={() => setFilterDropdownVisible(!filterDropdownVisible)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.filterDropdownText}>
+                      {statusFilter === 'ALL' && 'Tất cả trạng thái'}
+                      {statusFilter === 'PENDING' && 'Chờ duyệt'}
+                      {statusFilter === 'APPROVED' && 'Đã phê duyệt'}
+                      {statusFilter === 'ACCEPTED' && 'Đã chấp nhận'}
+                      {statusFilter === 'REJECTED' && 'Đã từ chối'}
                     </Text>
-                  </View>
-                ) : (
-                  <View style={styles.applicationsList}>
-                    {filteredApplications.map((application) => (
-                      <View key={application._id} style={styles.applicationCard}>
-                        <View style={styles.applicationHeader}>
-                          <View style={styles.userInfo}>
-                            <View style={styles.avatarCircle}>
-                              <Text style={styles.avatarInitial}>
-                                {application.userId?.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                              </Text>
-                            </View>
-                            <View style={styles.userDetails}>
-                              <Text style={styles.userName}>
-                                {application.userId?.fullName || 'Người dùng'}
-                              </Text>
-                              <Text style={styles.userInfoText}>
-                                {application.userId?.email || ''}
-                              </Text>
-                              <Text style={styles.userInfoText}>
-                                {application.userId?.school || ''} • {application.userId?.major || ''}
-                                {application.userId?.year ? ` • Năm ${application.userId.year}` : ''}
-                              </Text>
-                              <Text style={styles.applicationDate}>
-                                Nộp đơn: {formatDate(application.submittedAt)}
-                              </Text>
-                            </View>
-                          </View>
-                          <View
-                            style={[
-                              styles.statusBadge,
-                              { backgroundColor: getStatusColor(application.status) + '20' },
-                            ]}
-                          >
-                            <Text
-                              style={[
-                                styles.statusText,
-                                { color: getStatusColor(application.status) },
-                              ]}
-                            >
-                              {getStatusText(application.status)}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <View style={styles.reasonSection}>
-                          <Text style={styles.reasonLabel}>Lý do gia nhập:</Text>
-                          <Text style={styles.reasonText}>
-                            {application.reason || 'Không có lý do'}
-                          </Text>
-                        </View>
-
-                        {application.status === 'REJECTED' && application.rejectionReason && (
-                          <View style={styles.rejectionReasonSection}>
-                            <Text style={styles.rejectionReasonLabel}>Lý do từ chối:</Text>
-                            <Text style={styles.rejectionReasonText}>
-                              {application.rejectionReason}
-                            </Text>
-                          </View>
-                        )}
-
-                        {application.status === 'APPROVED' && application.interviewDate && (
-                          <View style={styles.interviewSection}>
-                            <Text style={styles.interviewLabel}>Thông tin phỏng vấn:</Text>
-                            <View style={styles.interviewInfo}>
-                              <Text style={styles.interviewText}>
-                                📅 Ngày: {formatDate(application.interviewDate)}
-                              </Text>
-                              {application.interviewLocation && (
-                                <Text style={styles.interviewText}>
-                                  📍 Địa điểm: {application.interviewLocation}
-                                </Text>
-                              )}
-                              {application.interviewNote && (
-                                <Text style={styles.interviewText}>
-                                  📝 Ghi chú: {application.interviewNote}
-                                </Text>
-                              )}
-                            </View>
-                          </View>
-                        )}
-
-                        {application.status === 'PENDING' && (
-                          <View style={styles.actionButtons}>
-                            <TouchableOpacity
-                              style={styles.rejectButton}
-                              onPress={() =>
-                                handleReject(
-                                  application._id,
-                                  application.userId?.fullName
-                                )
-                              }
-                              activeOpacity={0.8}
-                            >
-                              <Text style={styles.rejectButtonText}>Từ chối</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.approveButton}
-                              onPress={() =>
-                                handleApprove(
-                                  application._id,
-                                  application.userId?.fullName
-                                )
-                              }
-                              activeOpacity={0.8}
-                            >
-                              <Text style={styles.approveButtonText}>Duyệt</Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
-
-                        {application.status === 'APPROVED' && application.interviewDate && (
-                          <View style={styles.actionButtons}>
-                            <TouchableOpacity
-                              style={styles.finalDecisionButton}
-                              onPress={() =>
-                                handleFinalDecision(
-                                  application._id,
-                                  application.userId?.fullName
-                                )
-                              }
-                              activeOpacity={0.8}
-                            >
-                              <Text style={styles.finalDecisionButtonText}>Xác nhận cuối cùng</Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-          )}
-
-          {/* Reject Modal */}
-          <Modal
-            visible={rejectModalVisible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setRejectModalVisible(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Từ chối đơn gia nhập</Text>
-                <Text style={styles.modalSubtitle}>
-                  Vui lòng nhập lý do từ chối đơn của "{selectedUserName}"
-                </Text>
-                <TextInput
-                  style={styles.modalTextInput}
-                  placeholder="Nhập lý do từ chối..."
-                  placeholderTextColor="rgba(255,255,255,0.4)"
-                  multiline
-                  numberOfLines={4}
-                  value={rejectReason}
-                  onChangeText={setRejectReason}
-                  textAlignVertical="top"
-                />
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.modalButtonCancel]}
-                    onPress={() => {
-                      setRejectModalVisible(false);
-                      setRejectReason('');
-                    }}
-                  >
-                    <Text style={styles.modalButtonCancelText}>Hủy</Text>
+                    <Text style={styles.filterDropdownIcon}>
+                      {filterDropdownVisible ? '▲' : '▼'}
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.modalButtonConfirm]}
-                    onPress={confirmReject}
-                  >
-                    <Text style={styles.modalButtonConfirmText}>Xác nhận</Text>
-                  </TouchableOpacity>
+
+                  {filterDropdownVisible && (
+                    <View style={styles.filterDropdownMenu}>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'ALL' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('ALL')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'ALL' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Tất cả trạng thái
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'PENDING' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('PENDING')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'PENDING' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Chờ duyệt
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'APPROVED' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('APPROVED')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'APPROVED' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Đã phê duyệt
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'ACCEPTED' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('ACCEPTED')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'ACCEPTED' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Đã chấp nhận
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'REJECTED' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('REJECTED')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'REJECTED' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Đã từ chối
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               </View>
-            </View>
-          </Modal>
 
-          {/* Approve Modal */}
-          <Modal
-            visible={approveModalVisible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setApproveModalVisible(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Phê duyệt đơn gia nhập</Text>
-                <Text style={styles.modalSubtitle}>
-                  Nhập thông tin phỏng vấn cho "{selectedUserName}"
-                </Text>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Ngày phỏng vấn *</Text>
-                  <TextInput
-                    style={styles.modalTextInput}
-                    placeholder="YYYY-MM-DD HH:mm (ví dụ: 2025-12-01 10:00)"
-                    placeholderTextColor="rgba(255,255,255,0.4)"
-                    value={interviewDate}
-                    onChangeText={setInterviewDate}
-                  />
-                  <Text style={styles.fieldHint}>
-                    Định dạng: YYYY-MM-DD HH:mm
+              {filteredApplications.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    {statusFilter === 'ALL'
+                      ? 'Chưa có đơn đăng ký nào'
+                      : 'Không có đơn nào với trạng thái này'}
                   </Text>
                 </View>
+              ) : (
+                <View style={styles.applicationsList}>
+                  {filteredApplications.map((application) => (
+                    <View key={application._id} style={styles.applicationCard}>
+                      <View style={styles.applicationHeader}>
+                        <View style={styles.userInfo}>
+                          <View style={styles.avatarCircle}>
+                            <Text style={styles.avatarInitial}>
+                              {application.userId?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                            </Text>
+                          </View>
+                          <View style={styles.userDetails}>
+                            <Text style={styles.userName}>
+                              {application.userId?.fullName || 'Người dùng'}
+                            </Text>
+                            <Text style={styles.userInfoText}>
+                              {application.userId?.email || ''}
+                            </Text>
+                            <Text style={styles.userInfoText}>
+                              {application.userId?.school || ''} • {application.userId?.major || ''}
+                              {application.userId?.year ? ` • Năm ${application.userId.year}` : ''}
+                            </Text>
+                            <Text style={styles.applicationDate}>
+                              Nộp đơn: {formatDate(application.submittedAt)}
+                            </Text>
+                          </View>
+                        </View>
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            { backgroundColor: getStatusColor(application.status) + '20' },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusText,
+                              { color: getStatusColor(application.status) },
+                            ]}
+                          >
+                            {getStatusText(application.status)}
+                          </Text>
+                        </View>
+                      </View>
 
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Địa điểm phỏng vấn *</Text>
-                  <TextInput
-                    style={styles.modalTextInput}
-                    placeholder="Nhập địa điểm phỏng vấn..."
-                    placeholderTextColor="rgba(255,255,255,0.4)"
-                    value={interviewLocation}
-                    onChangeText={setInterviewLocation}
-                  />
-                </View>
+                      <View style={styles.reasonSection}>
+                        <Text style={styles.reasonLabel}>Lý do gia nhập:</Text>
+                        <Text style={styles.reasonText}>
+                          {application.reason || 'Không có lý do'}
+                        </Text>
+                      </View>
 
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Ghi chú (tùy chọn)</Text>
-                  <TextInput
-                    style={[styles.modalTextInput, styles.textArea]}
-                    placeholder="Nhập ghi chú phỏng vấn..."
-                    placeholderTextColor="rgba(255,255,255,0.4)"
-                    multiline
-                    numberOfLines={3}
-                    textAlignVertical="top"
-                    value={interviewNote}
-                    onChangeText={setInterviewNote}
-                  />
-                </View>
+                      {application.status === 'REJECTED' && application.rejectionReason && (
+                        <View style={styles.rejectionReasonSection}>
+                          <Text style={styles.rejectionReasonLabel}>Lý do từ chối:</Text>
+                          <Text style={styles.rejectionReasonText}>
+                            {application.rejectionReason}
+                          </Text>
+                        </View>
+                      )}
 
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.modalButtonCancel]}
-                    onPress={() => {
-                      setApproveModalVisible(false);
-                      setInterviewDate('');
-                      setInterviewLocation('');
-                      setInterviewNote('');
-                    }}
-                  >
-                    <Text style={styles.modalButtonCancelText}>Hủy</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.modalButtonApprove]}
-                    onPress={confirmApprove}
-                  >
-                    <Text style={styles.modalButtonApproveText}>Xác nhận</Text>
-                  </TouchableOpacity>
+                      {application.status === 'APPROVED' && application.interviewDate && (
+                        <View style={styles.interviewSection}>
+                          <Text style={styles.interviewLabel}>Thông tin phỏng vấn:</Text>
+                          <View style={styles.interviewInfo}>
+                            <Text style={styles.interviewText}>
+                              📅 Thời gian: {formatDateTime(application.interviewDate)}
+                            </Text>
+                            {application.interviewLocation && (
+                              <Text style={styles.interviewText}>
+                                📍 Địa điểm: {application.interviewLocation}
+                              </Text>
+                            )}
+                            {application.interviewNote && (
+                              <Text style={styles.interviewText}>
+                                📝 Ghi chú: {application.interviewNote}
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                      )}
+
+                      {application.status === 'PENDING' && (
+                        <View style={styles.actionButtons}>
+                          <TouchableOpacity
+                            style={styles.rejectButton}
+                            onPress={() =>
+                              handleReject(
+                                application._id,
+                                application.userId?.fullName
+                              )
+                            }
+                            activeOpacity={0.8}
+                          >
+                            <Text style={styles.rejectButtonText}>Từ chối</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.approveButton}
+                            onPress={() =>
+                              handleApprove(
+                                application._id,
+                                application.userId?.fullName
+                              )
+                            }
+                            activeOpacity={0.8}
+                          >
+                            <Text style={styles.approveButtonText}>Duyệt</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+
+                      {application.status === 'APPROVED' && application.interviewDate && (
+                        <View style={styles.actionButtons}>
+                          <TouchableOpacity
+                            style={styles.finalDecisionButton}
+                            onPress={() =>
+                              handleFinalDecision(
+                                application._id,
+                                application.userId?.fullName
+                              )
+                            }
+                            activeOpacity={0.8}
+                          >
+                            <Text style={styles.finalDecisionButtonText}>Xác nhận</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  ))}
                 </View>
+              )}
+            </View>
+          </ScrollView>
+        )}
+
+        {/* Reject Modal */}
+        <Modal
+          visible={rejectModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setRejectModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Từ chối đơn gia nhập</Text>
+              <Text style={styles.modalSubtitle}>
+                Vui lòng nhập lý do từ chối đơn của "{selectedUserName}"
+              </Text>
+              <TextInput
+                style={styles.modalTextInput}
+                placeholder="Nhập lý do từ chối..."
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                multiline
+                numberOfLines={4}
+                value={rejectReason}
+                onChangeText={setRejectReason}
+                textAlignVertical="top"
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={() => {
+                    setRejectModalVisible(false);
+                    setRejectReason('');
+                  }}
+                >
+                  <Text style={styles.modalButtonCancelText}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={confirmReject}
+                >
+                  <Text style={styles.modalButtonConfirmText}>Xác nhận</Text>
+                </TouchableOpacity>
               </View>
             </View>
-          </Modal>
+          </View>
+        </Modal>
+
+        {/* Approve Modal */}
+        <Modal
+          visible={approveModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setApproveModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Phê duyệt đơn gia nhập</Text>
+              <Text style={styles.modalSubtitle}>
+                Nhập thông tin phỏng vấn cho "{selectedUserName}"
+              </Text>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Ngày phỏng vấn *</Text>
+                <TextInput
+                  style={styles.modalTextInput}
+                  placeholder="YYYY-MM-DD HH:mm (ví dụ: 2025-12-01 10:00)"
+                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  value={interviewDate}
+                  editable={false}
+                  pointerEvents="none"
+                />
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={handleOpenDatePicker}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.datePickerButtonText}>Chọn ngày giờ</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Địa điểm phỏng vấn *</Text>
+                <TextInput
+                  style={styles.modalTextInput}
+                  placeholder="Nhập địa điểm phỏng vấn..."
+                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  value={interviewLocation}
+                  onChangeText={setInterviewLocation}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Ghi chú (tùy chọn)</Text>
+                <TextInput
+                  style={[styles.modalTextInput, styles.textArea]}
+                  placeholder="Nhập ghi chú phỏng vấn..."
+                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  value={interviewNote}
+                  onChangeText={setInterviewNote}
+                />
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={() => {
+                    setApproveModalVisible(false);
+                    setInterviewDate('');
+                    setInterviewLocation('');
+                    setInterviewNote('');
+                  }}
+                >
+                  <Text style={styles.modalButtonCancelText}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonApprove]}
+                  onPress={confirmApprove}
+                >
+                  <Text style={styles.modalButtonApproveText}>Xác nhận</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={pickerDate || new Date()}
+                mode="date"
+                display="default"
+                onChange={handleDatePicked}
+              />
+            )}
+            {showTimePicker && (
+              <DateTimePicker
+                value={pickerDate || new Date()}
+                mode="time"
+                display="default"
+                onChange={handleTimePicked}
+              />
+            )}
+          </View>
+        </Modal>
 
         {/* Final Decision Modal */}
         <Modal
@@ -838,31 +965,31 @@ const ClubApplicationsScreen = ({ navigation }) => {
             activeOpacity={1}
             onPress={() => setFinalDecisionModalVisible(false)}
           >
-              <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
-                <Text style={styles.modalTitle}>Xác nhận cuối cùng</Text>
-                <Text style={styles.modalSubtitle}>
-                  Chọn quyết định cuối cùng cho "{selectedFinalDecisionUserName}"
-                </Text>
+            <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+              <Text style={styles.modalTitle}>Xác nhận</Text>
+              <Text style={styles.modalSubtitle}>
+                Xác nhận thành viên "{selectedFinalDecisionUserName}"
+              </Text>
 
-                <View style={styles.finalDecisionButtons}>
-                  <TouchableOpacity
-                    style={[styles.finalDecisionOption, styles.finalDecisionAccept]}
-                    onPress={() => confirmFinalDecision('accepted')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.finalDecisionOptionText, { color: '#34C25E' }]}>Chấp nhận</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.finalDecisionOption, styles.finalDecisionDecline]}
-                    onPress={() => confirmFinalDecision('declined')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.finalDecisionOptionText, { color: '#EF4444' }]}>Từ chối</Text>
-                  </TouchableOpacity>
-                </View>
+              <View style={styles.finalDecisionButtons}>
+                <TouchableOpacity
+                  style={[styles.finalDecisionOption, styles.finalDecisionAccept]}
+                  onPress={() => confirmFinalDecision('accepted')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.finalDecisionOptionText, { color: '#34C25E' }]}>Chấp nhận</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.finalDecisionOption, styles.finalDecisionDecline]}
+                  onPress={() => confirmFinalDecision('declined')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.finalDecisionOptionText, { color: '#EF4444' }]}>Từ chối</Text>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          </Modal>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -1290,6 +1417,21 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(148,163,184,0.3)',
     minHeight: 100,
     marginBottom: 16,
+  },
+  datePickerButton: {
+    backgroundColor: 'rgba(168, 85, 247, 0.18)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(168, 85, 247, 0.45)',
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  datePickerButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
   modalButtons: {
     flexDirection: 'row',

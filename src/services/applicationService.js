@@ -1,6 +1,16 @@
 import api from './api';
 
 export const applicationService = {
+  // Create application to join a club (for student role)
+  createApplication: async (clubId, reason) => {
+    try {
+      const response = await api.post('/applications', { clubId, reason });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Get user's applications
   getMyApplications: async () => {
     try {

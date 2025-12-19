@@ -24,7 +24,7 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const loginMutation = useLogin();
-  
+
   // Use navigation hook - React Navigation provides this via context
   const nav = useNavigation();
 
@@ -83,11 +83,9 @@ const LoginScreen = ({ navigation }) => {
 
   const handleSignUp = () => {
     try {
-      console.log('handleSignUp called, navigating to Register...');
       nav.navigate('Register');
-      console.log('Navigate called successfully');
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
-      console.error('Navigation error to Register:', error);
       Alert.alert('Error', 'Could not navigate to Register screen');
     }
   };

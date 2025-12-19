@@ -19,6 +19,7 @@ import { useResendOTP, useVerifyOTP } from '../../hooks/useAuth';
 
 const OTPVerificationScreen = ({ route, navigation }) => {
   const { email } = route.params || {};
+  const normalizedEmail = (email || '').trim();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -82,7 +83,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
       return;
     }
 
-    if (!email) {
+    if (!normalizedEmail) {
       Alert.alert('Lỗi', 'Email không hợp lệ');
       return;
     }
@@ -90,7 +91,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
     try {
       // eslint-disable-next-line no-unused-vars
       const response = await verifyOTPMutation.mutateAsync({
-        email,
+        email: normalizedEmail,
         otp: otpCode,
       });
 
@@ -115,13 +116,13 @@ const OTPVerificationScreen = ({ route, navigation }) => {
   };
 
   const handleResendOTP = async () => {
-    if (!email) {
+    if (!normalizedEmail) {
       Alert.alert('Lỗi', 'Email không hợp lệ');
       return;
     }
 
     try {
-      await resendOTPMutation.mutateAsync({ email });
+      await resendOTPMutation.mutateAsync({ email: normalizedEmail });
       setTimer(60);
       setCanResend(false);
       setOtp(['', '', '', '', '', '']);
@@ -153,7 +154,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
 
           <View style={styles.logoWrapper}>
             <Image source={ClubverseLogo} style={styles.logoImage} resizeMode="contain" />
-            <Text style={styles.appName}>Clubverse</Text>
+            
           </View>
 
           <View style={styles.card}>
@@ -161,7 +162,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
               <Text style={styles.welcomeTitle}>Verify Your Email</Text>
               <Text style={styles.welcomeSubtitle}>
                 We've sent a 6-digit code to{'\n'}
-                <Text style={styles.emailText}>{email}</Text>
+                <Text style={styles.emailText}>{normalizedEmail}</Text>
               </Text>
             </View>
 
@@ -214,24 +215,20 @@ const OTPVerificationScreen = ({ route, navigation }) => {
             </TouchableOpacity>
 
             <View style={styles.resendContainer}>
-              <Text style={styles.resendText}>
-                Didn't receive the code?{' '}
-                {canResend ? (
-                  <TouchableOpacity
-                    onPress={handleResendOTP}
-                    disabled={resendOTPMutation.isPending}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.resendLink}>
-                      {resendOTPMutation.isPending ? 'Sending...' : 'Resend'}
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <Text style={styles.timerText}>
-                    Resend in {timer}s
+              <Text style={styles.resendText}>Didn't receive the code?</Text>
+              {canResend ? (
+                <TouchableOpacity
+                  onPress={handleResendOTP}
+                  disabled={resendOTPMutation.isPending}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.resendLink}>
+                    {resendOTPMutation.isPending ? 'Sending...' : ' Resend'}
                   </Text>
-                )}
-              </Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.timerText}> Resend in {timer}s</Text>
+              )}
             </View>
           </View>
         </View>
@@ -319,29 +316,25 @@ const styles = StyleSheet.create({
   },
   otpContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: 32,
   },
   otpInput: {
-    width: 45,
-    height: 55,
+    width: 44,
+    height: 54,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.15)',
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '600',
     textAlign: 'center',
-    shadowColor: '#5D2DE2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
+    marginHorizontal: 4,
   },
   otpInputFilled: {
     borderColor: '#A78BFA',
-    backgroundColor: 'rgba(167, 139, 250, 0.1)',
+    backgroundColor: 'transparent',
   },
   otpInputDisabled: {
     opacity: 0.6,
@@ -372,6 +365,8 @@ const styles = StyleSheet.create({
   },
   resendContainer: {
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   resendText: {
     fontSize: 13,
@@ -380,7 +375,7 @@ const styles = StyleSheet.create({
   },
   resendLink: {
     color: '#A78BFA',
-    fontWeight: '600',
+    fontWeight: '500',
     textDecorationLine: 'underline',
   },
   timerText: {

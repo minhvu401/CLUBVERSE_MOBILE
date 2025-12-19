@@ -2,17 +2,17 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
@@ -52,13 +52,15 @@ const RegisterScreen = () => {
       return false;
     }
 
-    if (!formData.email.trim()) {
+    const trimmedEmail = formData.email.trim();
+
+    if (!trimmedEmail) {
       Alert.alert('Lỗi', 'Vui lòng nhập email');
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(trimmedEmail)) {
       Alert.alert('Lỗi', 'Định dạng email không hợp lệ');
       return false;
     }
@@ -108,8 +110,9 @@ const RegisterScreen = () => {
     if (!validateForm()) return;
 
     try {
+      const trimmedEmail = formData.email.trim();
       const payload = {
-        email: formData.email.trim(),
+        email: trimmedEmail,
         password: formData.password,
         fullName: formData.fullName.trim(),
         phoneNumber: formData.phoneNumber.trim(),
@@ -122,7 +125,7 @@ const RegisterScreen = () => {
 
       // Navigate to OTP verification screen
       if (navigation && navigation.navigate) {
-        navigation.navigate('OTPVerification', { email: formData.email });
+        navigation.navigate('OTPVerification', { email: trimmedEmail });
       } else {
         Alert.alert(
           'Thành công',

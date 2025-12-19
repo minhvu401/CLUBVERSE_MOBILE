@@ -2,13 +2,13 @@ import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { applicationService } from '../../services/applicationService';
@@ -33,7 +33,7 @@ const MyApplicationsScreen = ({ navigation }) => {
         const response = await applicationService.getMyApplications();
         if (isMounted) {
           setApplications(response.applications || []);
-          
+
           // Calculate statistics
           const total = response.total || 0;
           const pending = response.applications?.filter(
@@ -87,7 +87,7 @@ const MyApplicationsScreen = ({ navigation }) => {
               // Reload applications
               const response = await applicationService.getMyApplications();
               setApplications(response.applications || []);
-              
+
               const total = response.total || 0;
               const pending = response.applications?.filter(
                 (app) => app.status === 'PENDING'
@@ -100,7 +100,7 @@ const MyApplicationsScreen = ({ navigation }) => {
               ).length || 0;
 
               setStats({ total, pending, approved, rejected });
-              
+
               Alert.alert('Thành công', 'Đã hủy đơn gia nhập');
             } catch (error) {
               Alert.alert('Lỗi', error.message || 'Không thể hủy đơn');
@@ -177,25 +177,24 @@ const MyApplicationsScreen = ({ navigation }) => {
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats.pending}</Text>
                 <Text style={styles.statLabel}>Chờ duyệt</Text>
-                <Text style={styles.statIcon}>⏰</Text>
+
               </View>
 
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats.approved}</Text>
                 <Text style={styles.statLabel}>Đã phê duyệt</Text>
-                <Text style={styles.statIcon}>✓</Text>
+
               </View>
 
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats.rejected}</Text>
                 <Text style={styles.statLabel}>Từ chối</Text>
-                <Text style={styles.statIcon}>✗</Text>
               </View>
 
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats.total}</Text>
                 <Text style={styles.statLabel}>Tổng đơn</Text>
-                <Text style={styles.statIcon}>📄</Text>
+
               </View>
             </View>
 

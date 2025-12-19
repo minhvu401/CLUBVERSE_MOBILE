@@ -1,15 +1,18 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { applicationService } from '../../services/applicationService';
 import { authService } from '../../services/authService';
+import { clubService } from '../../services/clubService';
 
 const { width } = Dimensions.get('window');
 
@@ -59,25 +62,63 @@ const mockMyClubsColors = ['#8E5AF7', '#FF4F8B', '#45E07E', '#FF8A3C'];
 
 const HomeScreen = () => {
   const [userName, setUserName] = useState('');
+  const [clubs, setClubs] = useState([]);
+  const [loadingClubs, setLoadingClubs] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadUser = async () => {
+    const loadData = async () => {
       try {
         const user = await authService.getCurrentUser();
         if (isMounted && user && user.fullName) {
           setUserName(user.fullName);
         }
-      } catch (_error) {}
+
+        const clubsResponse = await clubService.getAllClubs();
+        if (isMounted) {
+          setClubs(clubsResponse.clubs || []);
+        }
+      } catch (_error) {
+        // TODO: you could show an Alert here if needed
+      } finally {
+        if (isMounted) setLoadingClubs(false);
+      }
     };
 
-    loadUser();
+    loadData();
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  const handleApplyToClub = (club) => {
+    Alert.alert(
+      'Tham gia CLB',
+      `Bạn có chắc chắn muốn gửi đơn gia nhập "${club.fullName}"?`,
+      [
+        {
+          text: 'Hủy',
+          style: 'cancel',
+        },
+        {
+          text: 'Gửi đơn',
+          onPress: async () => {
+            try {
+              await applicationService.createApplication(
+                club._id,
+                'Em rất mong muốn được tham gia và đóng góp cho câu lạc bộ.'
+              );
+              Alert.alert('Thành công', 'Đã gửi đơn gia nhập CLB.');
+            } catch (error) {
+              Alert.alert('Lỗi', error.message || 'Không thể gửi đơn gia nhập.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <LinearGradient
@@ -102,66 +143,70 @@ const HomeScreen = () => {
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionTitleRow}>
                 <View style={styles.sectionIconBullet} />
-                <Text style={styles.sectionTitle}>CLB Gợi ý cho bạn</Text>
+                <Text style={styles.sectionTitle}>Tất cả CLB</Text>
               </View>
-              <TouchableOpacity activeOpacity={0.8}>
-                <Text style={styles.sectionActionText}>Xem tất cả</Text>
-              </TouchableOpacity>
             </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              snapToAlignment="start"
-              decelerationRate="fast"
-              snapToInterval={RECOMMEND_CARD_WIDTH + 16}
-              contentContainerStyle={styles.recommendScrollContent}
-            >
-              {mockRecommendedClubs.map((club) => (
-                <LinearGradient
-                  key={club.id}
-                  colors={["#6C4DEB", "#F05BC8"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.recommendCard}
-                >
-                  <View style={styles.recommendTopRow}>
-                    <View style={styles.matchBadge}>
-                      <Text style={styles.matchBadgeText}>{club.match}% phù hợp</Text>
-                    </View>
-                    <TouchableOpacity activeOpacity={0.8}>
-                      <Text style={styles.cardSeeAllText}>Chi tiết</Text>
-                    </TouchableOpacity>
-                  </View>
+            {loadingClubs ? (
+              <View style={styles.loadingRow}>
+                <Text style={styles.loadingText}>Đang tải danh sách CLB...</Text>
+              </View>
+            ) : clubs.length === 0 ? (
+              <View style={styles.loadingRow}>
+                <Text style={styles.loadingText}>Hiện chưa có CLB nào.</Text>
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                snapToInterval={RECOMMEND_CARD_WIDTH + 16}
+                contentContainerStyle={styles.recommendScrollContent}
+              >
+                {clubs.map((club) => (
+                  <TouchableOpacity
+                    key={club._id}
+                    activeOpacity={0.9}
+                    onPress={() => handleApplyToClub(club)}
+                  >
+                    <LinearGradient
+                      colors={["#6C4DEB", "#F05BC8"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.recommendCard}
+                    >
+                      <View style={styles.recommendTopRow}>
+                        <View style={styles.matchBadge}>
+                          <Text style={styles.matchBadgeText}>CLB</Text>
+                        </View>
+                      </View>
 
-                  <Text numberOfLines={2} style={styles.recommendName}>
-                    {club.name}
-                  </Text>
-                  <Text numberOfLines={2} style={styles.recommendDescription}>
-                    {club.description}
-                  </Text>
+                      <Text numberOfLines={2} style={styles.recommendName}>
+                        {club.fullName || 'Tên CLB'}
+                      </Text>
+                      <Text
+                        numberOfLines={2}
+                        style={styles.recommendDescription}
+                      >
+                        {club.description || ''}
+                      </Text>
 
-                  <View style={styles.recommendBottomRow}>
-                    <View style={styles.tagPill}>
-                      <Text style={styles.tagPillText}>{club.category}</Text>
-                    </View>
-                    <Text style={styles.membersText}>{club.members.toLocaleString('vi-VN')} thành viên</Text>
-                  </View>
-                </LinearGradient>
-              ))}
-            </ScrollView>
-
-            <View style={styles.paginationWrapper}>
-              {mockRecommendedClubs.map((club, index) => (
-                <View
-                  key={club.id}
-                  style={[
-                    styles.dot,
-                    index === 0 ? styles.dotActive : styles.dotInactive,
-                  ]}
-                />
-              ))}
-            </View>
+                      <View style={styles.recommendBottomRow}>
+                        {club.category ? (
+                          <View style={styles.tagPill}>
+                            <Text style={styles.tagPillText}>{club.category}</Text>
+                          </View>
+                        ) : null}
+                        <Text style={styles.membersText}>
+                          {club.school ? club.school : ''}
+                        </Text>
+                      </View>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
           </View>
 
           <View style={styles.sectionWrapper}>
@@ -293,8 +338,10 @@ const styles = StyleSheet.create({
   },
   recommendCard: {
     width: RECOMMEND_CARD_WIDTH,
+    height: 170,
     borderRadius: 24,
     padding: 18,
+    justifyContent: 'space-between',
     marginRight: 16,
     shadowColor: '#000',
     shadowOpacity: 0.35,

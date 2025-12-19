@@ -1,16 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Platform,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
@@ -49,7 +49,8 @@ const LoginScreen = ({ navigation }) => {
         password 
       });
 
-      // Đăng nhập thành công
+      // Đăng nhập thành công - Check role để redirect
+      const userRole = response.user?.role;
       Alert.alert(
         'Thành công',
         `Chào mừng ${response.user.fullName}!`,
@@ -58,7 +59,12 @@ const LoginScreen = ({ navigation }) => {
             text: 'OK',
             onPress: () => {
               if (navigation) {
-                navigation.replace('Main');
+                // Redirect dựa trên role
+                if (userRole === 'club') {
+                  navigation.replace('ClubMain');
+                } else {
+                  navigation.replace('Main');
+                }
               }
             },
           },

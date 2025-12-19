@@ -1,18 +1,20 @@
+/* eslint-disable react/no-unescaped-entities */
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Image,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// import ClubverseLogo from '../../assets/images/clubverse-logo.png';
+import ClubverseLogo from '../../assets/images/clubverse-logo.png';
 import { useResendOTP, useVerifyOTP } from '../../hooks/useAuth';
 
 const OTPVerificationScreen = ({ route, navigation }) => {
@@ -86,6 +88,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
     }
 
     try {
+      // eslint-disable-next-line no-unused-vars
       const response = await verifyOTPMutation.mutateAsync({
         email,
         otp: otpCode,
@@ -131,31 +134,33 @@ const OTPVerificationScreen = ({ route, navigation }) => {
 
   return (
     <LinearGradient
-      colors={['#5D2DE2', '#020721']}
+      colors={['#B390EC', '#1E2960', '#4F1494', '#711B99', '#091345']}
+      locations={[0.01, 0.25, 0.5, 0.75, 1]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-        <View style={styles.scrollContent}>
+        <View style={styles.container}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
             activeOpacity={0.8}
           >
-            <Text style={styles.backButtonText}>← Quay lại</Text>
+            <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
 
           <View style={styles.logoWrapper}>
-            {/* <Image source={ClubverseLogo} style={styles.logoImage} resizeMode="contain" /> */}
+            <Image source={ClubverseLogo} style={styles.logoImage} resizeMode="contain" />
+            <Text style={styles.appName}>Clubverse</Text>
           </View>
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.welcomeTitle}>Xác thực Email của bạn</Text>
+              <Text style={styles.welcomeTitle}>Verify Your Email</Text>
               <Text style={styles.welcomeSubtitle}>
-                Chúng tôi đã gửi mã 6 chữ số đến{'\n'}
+                We've sent a 6-digit code to{'\n'}
                 <Text style={styles.emailText}>{email}</Text>
               </Text>
             </View>
@@ -194,7 +199,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
                 colors={
                   verifyOTPMutation.isPending
                     ? ['#9D8DE2', '#C09BC8']
-                    : ['#5D2DE2', '#F05BC8']
+                    : ['#4F1494', '#FF4CAD']
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -203,14 +208,14 @@ const OTPVerificationScreen = ({ route, navigation }) => {
                 {verifyOTPMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.verifyText}>Xác thực</Text>
+                  <Text style={styles.verifyText}>Verify</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.resendContainer}>
               <Text style={styles.resendText}>
-                Không nhận được mã?{' '}
+                Didn't receive the code?{' '}
                 {canResend ? (
                   <TouchableOpacity
                     onPress={handleResendOTP}
@@ -218,12 +223,12 @@ const OTPVerificationScreen = ({ route, navigation }) => {
                     activeOpacity={0.8}
                   >
                     <Text style={styles.resendLink}>
-                      {resendOTPMutation.isPending ? 'Đang gửi...' : 'Gửi lại'}
+                      {resendOTPMutation.isPending ? 'Sending...' : 'Resend'}
                     </Text>
                   </TouchableOpacity>
                 ) : (
                   <Text style={styles.timerText}>
-                    Gửi lại sau {timer}s
+                    Resend in {timer}s
                   </Text>
                 )}
               </Text>
@@ -245,11 +250,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-  scrollContent: {
-    flexGrow: 1,
+  container: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 200,
+    paddingHorizontal: 20,
   },
   backButton: {
     position: 'absolute',
@@ -259,41 +264,57 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#8B5CF6',
+    color: '#A78BFA',
     fontWeight: '600',
   },
   logoWrapper: {
     alignItems: 'center',
+    marginBottom: 30,
   },
   logoImage: {
-    width: 300,
-    height: 270,
+    width: 260,
+    height: 220,
+  },
+  appName: {
+    fontSize: 28,
+    fontWeight: '300',
+    fontStyle: 'italic',
+    color: '#E8D9FF',
+    marginTop: 8,
+    letterSpacing: 1.5,
   },
   card: {
     width: CARD_WIDTH,
     backgroundColor: 'rgba(5, 12, 39, 0.95)',
-    borderRadius: 24,
+    borderRadius: 28,
     paddingHorizontal: 24,
-    paddingVertical: 28,
+    paddingVertical: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.15)',
+    shadowColor: '#5D2DE2',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.3,
+    shadowRadius: 40,
+    elevation: 15,
   },
   cardHeader: {
-    marginBottom: 20,
+    marginBottom: 32,
     alignItems: 'center',
   },
   welcomeTitle: {
-    fontSize: 18,
-    color: '#FFFFFF',
+    fontSize: 24,
     fontWeight: '600',
-    marginBottom: 6,
+    color: '#FFFFFF',
+    marginBottom: 12,
   },
   welcomeSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.65)',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
     lineHeight: 20,
   },
   emailText: {
-    color: '#8B5CF6',
+    color: '#A78BFA',
     fontWeight: '600',
   },
   otpContainer: {
@@ -304,54 +325,66 @@ const styles = StyleSheet.create({
   otpInput: {
     width: 45,
     height: 55,
-    borderRadius: 10,
-    backgroundColor: 'rgba(15,23,42,0.7)',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.5)',
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.15)',
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '600',
     textAlign: 'center',
+    shadowColor: '#5D2DE2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   otpInputFilled: {
-    borderColor: '#5D2DE2',
-    backgroundColor: 'rgba(93, 45, 226, 0.2)',
+    borderColor: '#A78BFA',
+    backgroundColor: 'rgba(167, 139, 250, 0.1)',
   },
   otpInputDisabled: {
     opacity: 0.6,
   },
   verifyButtonWrapper: {
-    borderRadius: 999,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 18,
+    marginBottom: 20,
+    shadowColor: '#FF4CAD',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
   verifyButtonDisabled: {
     opacity: 0.7,
   },
   verifyGradient: {
-    height: 48,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   verifyText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   resendContainer: {
     alignItems: 'center',
   },
   resendText: {
-    fontSize: 12,
-    color: 'rgba(148, 163, 184, 0.9)',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
   },
   resendLink: {
-    color: '#F472B6',
-    fontWeight: '500',
+    color: '#A78BFA',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   timerText: {
-    color: '#F472B6',
+    color: '#A78BFA',
     fontWeight: '500',
   },
 });

@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 
+import ClubNavigator from './src/navigation/ClubNavigator';
 import MainNavigator from './src/navigation/MainNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import OTPVerificationScreen from './src/screens/auth/OTPVerificationScreen';
@@ -32,6 +33,7 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
           <Stack.Screen name="Main" component={MainNavigator} />
+          <Stack.Screen name="ClubMain" component={ClubNavigator} />
         </Stack.Navigator>
         <StatusBar style="light" />
       </NavigationContainer>

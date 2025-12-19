@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import HomeScreen from '../screens/home/HomeScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import MyApplicationsScreen from '../screens/profile/MyApplicationsScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -36,6 +37,7 @@ const ProfileStackNavigator = () => (
   >
     <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
     <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
+    <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
   </ProfileStack.Navigator>
 );
 

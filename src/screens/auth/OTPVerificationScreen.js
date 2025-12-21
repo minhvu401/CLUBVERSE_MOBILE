@@ -1,17 +1,21 @@
-/* eslint-disable react/no-unescaped-entities */
+ 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  TouchableWithoutFeedback,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
@@ -143,95 +147,110 @@ const OTPVerificationScreen = ({ route, navigation }) => {
     >
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-        <View style={styles.container}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-
-          <View style={styles.logoWrapper}>
-            <Image source={ClubverseLogo} style={styles.logoImage} resizeMode="contain" />
-            
-          </View>
-
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.welcomeTitle}>Verify Your Email</Text>
-              <Text style={styles.welcomeSubtitle}>
-                We've sent a 6-digit code to{'\n'}
-                <Text style={styles.emailText}>{normalizedEmail}</Text>
-              </Text>
-            </View>
-
-            <View style={styles.otpContainer}>
-              {otp.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  ref={(ref) => (inputRefs.current[index] = ref)}
-                  style={[
-                    styles.otpInput,
-                    digit && styles.otpInputFilled,
-                    verifyOTPMutation.isPending && styles.otpInputDisabled,
-                  ]}
-                  value={digit}
-                  onChangeText={(value) => handleOTPChange(value, index)}
-                  onKeyPress={(e) => handleKeyPress(e, index)}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  selectTextOnFocus
-                  editable={!verifyOTPMutation.isPending}
-                />
-              ))}
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={[
-                styles.verifyButtonWrapper,
-                verifyOTPMutation.isPending && styles.verifyButtonDisabled,
-              ]}
-              onPress={handleVerify}
-              disabled={verifyOTPMutation.isPending}
-            >
-              <LinearGradient
-                colors={
-                  verifyOTPMutation.isPending
-                    ? ['#9D8DE2', '#C09BC8']
-                    : ['#4F1494', '#FF4CAD']
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.verifyGradient}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={{ flex: 1 }}>
+              <ScrollView
+                contentContainerStyle={styles.container}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
               >
-                {verifyOTPMutation.isPending ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.verifyText}>Verify</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <View style={styles.resendContainer}>
-              <Text style={styles.resendText}>Didn't receive the code?</Text>
-              {canResend ? (
                 <TouchableOpacity
-                  onPress={handleResendOTP}
-                  disabled={resendOTPMutation.isPending}
+                  style={styles.backButton}
+                  onPress={() => navigation.goBack()}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.resendLink}>
-                    {resendOTPMutation.isPending ? 'Sending...' : ' Resend'}
-                  </Text>
+                  <Text style={styles.backButtonText}>← Quay lại</Text>
                 </TouchableOpacity>
-              ) : (
-                <Text style={styles.timerText}> Resend in {timer}s</Text>
-              )}
+
+                <View style={styles.logoWrapper}>
+                  <Image source={ClubverseLogo} style={styles.logoImage} resizeMode="contain" />
+                  
+                </View>
+
+                <View style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.welcomeTitle}>Xác thực email của bạn</Text>
+                    <Text style={styles.welcomeSubtitle}>
+                      Vui lòng check spam mail nếu không thấy email xác thực{'\n'}
+                      Chúng tôi đã gửi mã xác thực đến{'\n'}
+                      <Text style={styles.emailText}>{normalizedEmail}</Text>
+                    </Text>
+                  </View>
+
+                  <View style={styles.otpContainer}>
+                    {otp.map((digit, index) => (
+                      <TextInput
+                        key={index}
+                        ref={(ref) => (inputRefs.current[index] = ref)}
+                        style={[
+                          styles.otpInput,
+                          digit && styles.otpInputFilled,
+                          verifyOTPMutation.isPending && styles.otpInputDisabled,
+                        ]}
+                        value={digit}
+                        onChangeText={(value) => handleOTPChange(value, index)}
+                        onKeyPress={(e) => handleKeyPress(e, index)}
+                        keyboardType="number-pad"
+                        maxLength={1}
+                        selectTextOnFocus
+                        editable={!verifyOTPMutation.isPending}
+                      />
+                    ))}
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={[
+                      styles.verifyButtonWrapper,
+                      verifyOTPMutation.isPending && styles.verifyButtonDisabled,
+                    ]}
+                    onPress={handleVerify}
+                    disabled={verifyOTPMutation.isPending}
+                  >
+                    <LinearGradient
+                      colors={
+                        verifyOTPMutation.isPending
+                          ? ['#9D8DE2', '#C09BC8']
+                          : ['#4F1494', '#FF4CAD']
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.verifyGradient}
+                    >
+                      {verifyOTPMutation.isPending ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.verifyText}>Xác thực</Text>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <View style={styles.resendContainer}>
+                    <Text style={styles.resendText}>Chưa nhận được mã?</Text>
+                    {canResend ? (
+                      <TouchableOpacity
+                        onPress={handleResendOTP}
+                        disabled={resendOTPMutation.isPending}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.resendLink}>
+                          {resendOTPMutation.isPending ? 'Đang gửi...' : 'Gửi lại'}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Text style={styles.timerText}>Gửi lại trong {timer}s</Text>
+                    )}
+                  </View>
+                </View>
+              </ScrollView>
             </View>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
   );

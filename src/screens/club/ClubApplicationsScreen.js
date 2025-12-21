@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -449,12 +449,13 @@ const ClubApplicationsScreen = ({ navigation }) => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <View style={styles.headerTextContainer}>
-              <Text style={styles.headerTitle}>Đơn Gia Nhập Câu Lạc Bộ</Text>
-              <Text style={styles.headerSubtitle}>
-                Xem xét và phê duyệt đơn đăng ký thành viên mới
-              </Text>
-            </View>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation?.goBack()}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.backButtonText}>← Quay lại</Text>
+            </TouchableOpacity>
             <View style={styles.headerActions}>
               <TouchableOpacity
                 style={styles.refreshButton}
@@ -525,6 +526,13 @@ const ClubApplicationsScreen = ({ navigation }) => {
                 <Text style={styles.logoutButtonText}>Đăng xuất</Text>
               </TouchableOpacity>
             </View>
+          </View>
+
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Đơn Gia Nhập Câu Lạc Bộ</Text>
+            <Text style={styles.headerSubtitle}>
+              Xem xét và phê duyệt đơn đăng ký thành viên mới
+            </Text>
           </View>
         </View>
 
@@ -822,7 +830,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Từ chối đơn gia nhập</Text>
               <Text style={styles.modalSubtitle}>
-                Vui lòng nhập lý do từ chối đơn của "{selectedUserName}"
+                Vui lòng nhập lý do từ chối đơn của “{selectedUserName}”
               </Text>
               <TextInput
                 style={styles.modalTextInput}
@@ -866,7 +874,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Phê duyệt đơn gia nhập</Text>
               <Text style={styles.modalSubtitle}>
-                Nhập thông tin phỏng vấn cho "{selectedUserName}"
+                Nhập thông tin phỏng vấn cho “{selectedUserName}”
               </Text>
 
               <View style={styles.fieldGroup}>
@@ -968,7 +976,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
             <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
               <Text style={styles.modalTitle}>Xác nhận</Text>
               <Text style={styles.modalSubtitle}>
-                Xác nhận thành viên "{selectedFinalDecisionUserName}"
+                Xác nhận thành viên “{selectedFinalDecisionUserName}”
               </Text>
 
               <View style={styles.finalDecisionButtons}>
@@ -1007,14 +1015,29 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginBottom: 8,
   },
+  backButton: {
+    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(168, 85, 247, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  backButtonText: {
+    fontSize: 13,
+    color: '#A78BFA',
+    fontWeight: '600',
+  },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   headerTextContainer: {
-    flex: 1,
-    marginRight: 12,
+    marginTop: 12,
   },
   headerActions: {
     flexDirection: 'row',

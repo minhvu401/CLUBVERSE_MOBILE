@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View } from 'react-native';
 
+import ClubApplicationsScreen from '../screens/club/ClubApplicationsScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import MyApplicationsScreen from '../screens/profile/MyApplicationsScreen';
@@ -38,6 +39,7 @@ const ProfileStackNavigator = () => (
     <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
     <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
     <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
+    <ProfileStack.Screen name="ClubApplications" component={ClubApplicationsScreen} />
   </ProfileStack.Navigator>
 );
 

@@ -5,6 +5,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StatusBar,
@@ -12,6 +14,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -156,202 +159,213 @@ const RegisterScreen = () => {
           translucent
           backgroundColor="transparent"
         />
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
         >
-          <View style={styles.logoWrapper}>
-            {ClubverseLogo && (
-              <Image
-                source={ClubverseLogo}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
-            )}
-          </View>
-
-          <View style={styles.card}>
-            {/* Full Name */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Họ và tên</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập họ và tên của bạn"
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  value={formData.fullName}
-                  onChangeText={(value) => handleInputChange('fullName', value)}
-                />
-              </View>
-            </View>
-
-            {/* Email */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Email</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập email của bạn"
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={formData.email}
-                  onChangeText={(value) => handleInputChange('email', value)}
-                />
-              </View>
-            </View>
-
-            {/* Phone */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Số điện thoại</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập số điện thoại của bạn"
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  keyboardType="phone-pad"
-                  value={formData.phoneNumber}
-                  onChangeText={(value) =>
-                    handleInputChange('phoneNumber', value)
-                  }
-                />
-              </View>
-            </View>
-
-            {/* School */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Trường học / Đại học</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập tên trường của bạn"
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  value={formData.school}
-                  onChangeText={(value) => handleInputChange('school', value)}
-                />
-              </View>
-            </View>
-
-            {/* Major */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Chuyên ngành</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập chuyên ngành của bạn"
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  value={formData.major}
-                  onChangeText={(value) => handleInputChange('major', value)}
-                />
-              </View>
-            </View>
-
-            {/* Password */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Mật khẩu</Text>
-              <View style={[styles.inputWrapper, styles.passwordContainer]}>
-                <TextInput
-                  style={[styles.input, styles.passwordInput]}
-                  placeholder="Tạo mật khẩu"
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  secureTextEntry={!showPassword}
-                  value={formData.password}
-                  onChangeText={(value) => handleInputChange('password', value)}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeButton}
-                >
-                  <Text style={styles.eyeIcon}>
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Confirm Password */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Xác nhận mật khẩu</Text>
-              <View style={[styles.inputWrapper, styles.passwordContainer]}>
-                <TextInput
-                  style={[styles.input, styles.passwordInput]}
-                  placeholder="Xác nhận mật khẩu của bạn"
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  secureTextEntry={!showConfirmPassword}
-                  value={formData.confirmPassword}
-                  onChangeText={(value) =>
-                    handleInputChange('confirmPassword', value)
-                  }
-                />
-                <TouchableOpacity
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={styles.eyeButton}
-                >
-                  <Text style={styles.eyeIcon}>
-                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Terms & Conditions */}
-            <TouchableOpacity
-              style={styles.checkboxWrapper}
-              onPress={() => setAgreeTerms(!agreeTerms)}
-            >
-              <View
-                style={[styles.checkbox, agreeTerms && styles.checkboxChecked]}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={{ flex: 1 }}>
+              <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
               >
-                {agreeTerms && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.checkboxLabel}>
-                Tôi đồng ý với{' '}
-                <Text style={styles.checkboxLinkText}>Điều khoản & Điều kiện</Text>{' '}
-                và <Text style={styles.checkboxLinkText}>Chính sách Bảo mật</Text>
-              </Text>
-            </TouchableOpacity>
+                <View style={styles.logoWrapper}>
+                  {ClubverseLogo && (
+                    <Image
+                      source={ClubverseLogo}
+                      style={styles.logoImage}
+                      resizeMode="contain"
+                    />
+                  )}
+                </View>
 
-            {/* Sign Up Button */}
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={[
-                styles.signUpButtonWrapper,
-                registerMutation.isPending && styles.signUpButtonDisabled,
-              ]}
-              onPress={handleRegister}
-              disabled={registerMutation.isPending}
-            >
-              <LinearGradient
-                colors={
-                  registerMutation.isPending
-                    ? ['#9D8DE2', '#C09BC8']
-                    : ['#5D2DE2', '#F05BC8']
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.signUpGradient}
-              >
-                {registerMutation.isPending ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.signUpText}>Đăng ký</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+                <View style={styles.card}>
+                  {/* Full Name */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Họ và tên</Text>
+                    <View style={styles.inputWrapper}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Nhập họ và tên của bạn"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        value={formData.fullName}
+                        onChangeText={(value) => handleInputChange('fullName', value)}
+                      />
+                    </View>
+                  </View>
 
-            {/* Sign In */}
-            <View style={styles.footerTextWrapper}>
-              <Text style={styles.footerTextNormal}>
-                Đã có tài khoản?{' '}
-              </Text>
-              <TouchableOpacity onPress={handleSignIn}>
-                <Text style={styles.footerTextLink}>Đăng nhập</Text>
-              </TouchableOpacity>
+                  {/* Email */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Email</Text>
+                    <View style={styles.inputWrapper}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Nhập email của bạn"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        value={formData.email}
+                        onChangeText={(value) => handleInputChange('email', value)}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Phone */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Số điện thoại</Text>
+                    <View style={styles.inputWrapper}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Nhập số điện thoại của bạn"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        keyboardType="phone-pad"
+                        value={formData.phoneNumber}
+                        onChangeText={(value) =>
+                          handleInputChange('phoneNumber', value)
+                        }
+                      />
+                    </View>
+                  </View>
+
+                  {/* School */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Trường học / Đại học</Text>
+                    <View style={styles.inputWrapper}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Nhập tên trường của bạn"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        value={formData.school}
+                        onChangeText={(value) => handleInputChange('school', value)}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Major */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Chuyên ngành</Text>
+                    <View style={styles.inputWrapper}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Nhập chuyên ngành của bạn"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        value={formData.major}
+                        onChangeText={(value) => handleInputChange('major', value)}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Password */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Mật khẩu</Text>
+                    <View style={[styles.inputWrapper, styles.passwordContainer]}>
+                      <TextInput
+                        style={[styles.input, styles.passwordInput]}
+                        placeholder="Tạo mật khẩu"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        secureTextEntry={!showPassword}
+                        value={formData.password}
+                        onChangeText={(value) => handleInputChange('password', value)}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                        style={styles.eyeButton}
+                      >
+                        <Text style={styles.eyeIcon}>
+                          {showPassword ? '👁️' : '👁️‍🗨️'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Confirm Password */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Xác nhận mật khẩu</Text>
+                    <View style={[styles.inputWrapper, styles.passwordContainer]}>
+                      <TextInput
+                        style={[styles.input, styles.passwordInput]}
+                        placeholder="Xác nhận mật khẩu của bạn"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        secureTextEntry={!showConfirmPassword}
+                        value={formData.confirmPassword}
+                        onChangeText={(value) =>
+                          handleInputChange('confirmPassword', value)
+                        }
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={styles.eyeButton}
+                      >
+                        <Text style={styles.eyeIcon}>
+                          {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Terms & Conditions */}
+                  <TouchableOpacity
+                    style={styles.checkboxWrapper}
+                    onPress={() => setAgreeTerms(!agreeTerms)}
+                  >
+                    <View
+                      style={[styles.checkbox, agreeTerms && styles.checkboxChecked]}
+                    >
+                      {agreeTerms && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <Text style={styles.checkboxLabel}>
+                      Tôi đồng ý với{' '}
+                      <Text style={styles.checkboxLinkText}>Điều khoản & Điều kiện</Text>{' '}
+                      và <Text style={styles.checkboxLinkText}>Chính sách Bảo mật</Text>
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Sign Up Button */}
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={[
+                      styles.signUpButtonWrapper,
+                      registerMutation.isPending && styles.signUpButtonDisabled,
+                    ]}
+                    onPress={handleRegister}
+                    disabled={registerMutation.isPending}
+                  >
+                    <LinearGradient
+                      colors={
+                        registerMutation.isPending
+                          ? ['#9D8DE2', '#C09BC8']
+                          : ['#5D2DE2', '#F05BC8']
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.signUpGradient}
+                    >
+                      {registerMutation.isPending ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.signUpText}>Đăng ký</Text>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  {/* Sign In */}
+                  <View style={styles.footerTextWrapper}>
+                    <Text style={styles.footerTextNormal}>
+                      Đã có tài khoản?{' '}
+                    </Text>
+                    <TouchableOpacity onPress={handleSignIn}>
+                      <Text style={styles.footerTextLink}>Đăng nhập</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.bottomPadding} />
+              </ScrollView>
             </View>
-          </View>
-
-          <View style={styles.bottomPadding} />
-        </ScrollView>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
   );

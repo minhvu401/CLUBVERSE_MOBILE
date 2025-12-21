@@ -3,12 +3,12 @@ import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLogout } from '../../hooks/useAuth';
@@ -200,7 +200,9 @@ const ProfileScreen = ({ navigation }) => {
               <TouchableOpacity 
                 activeOpacity={0.8} 
                 style={styles.settingItem}
-                onPress={() => navigation?.navigate('MyApplications')}
+                onPress={() =>
+                  navigation?.navigate(user?.role === 'club' ? 'ClubApplications' : 'MyApplications')
+                }
               >
                 <View style={styles.settingLeft}>
                   <Text style={styles.settingIcon}>📝</Text>
@@ -264,7 +266,7 @@ const styles = StyleSheet.create({
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 5,
   },
   avatarCircle: {
     width: 60,
@@ -282,6 +284,7 @@ const styles = StyleSheet.create({
   },
   headerInfo: {
     flex: 1,
+    
   },
   headerName: {
     fontSize: 18,

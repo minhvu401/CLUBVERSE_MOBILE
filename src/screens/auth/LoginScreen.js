@@ -4,14 +4,19 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    Keyboard,
+    KeyboardAvoidingView,
     Platform,
+    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
 import { useLogin } from '../../hooks/useAuth';
@@ -49,8 +54,6 @@ const LoginScreen = ({ navigation }) => {
         password 
       });
 
-      // Đăng nhập thành công - Check role để redirect
-      const userRole = response.user?.role;
       Alert.alert(
         'Thành công',
         `Chào mừng ${response.user.fullName}!`,
@@ -60,11 +63,7 @@ const LoginScreen = ({ navigation }) => {
             onPress: () => {
               if (navigation) {
                 // Redirect dựa trên role
-                if (userRole === 'club') {
-                  navigation.replace('ClubMain');
-                } else {
-                  navigation.replace('Main');
-                }
+                navigation.replace('Main');
               }
             },
           },
@@ -108,138 +107,152 @@ const LoginScreen = ({ navigation }) => {
           translucent
           backgroundColor="transparent"
         />
-        <View style={styles.scrollContent}>
-          <View style={styles.logoWrapper}>
-            <Image
-              source={ClubverseLogo}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-          </View>
-
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.welcomeTitle}>Chào mừng trở lại</Text>
-              <Text style={styles.welcomeSubtitle}>
-                Đăng nhập để khám phá các câu lạc bộ
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.googleButtonWrapper}
-              onPress={handleGoogleLogin}
-              disabled={loginMutation.isPending}
-            >
-              <View style={styles.googleButtonInner}>
-                <View style={styles.googleIconPlaceholder}>
-                  <Text style={styles.googleIconLetter}>G</Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={{ flex: 1 }}>
+              <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.logoWrapper}>
+                  <Image
+                    source={ClubverseLogo}
+                    style={styles.logoImage}
+                    resizeMode="contain"
+                  />
                 </View>
-                <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
-              </View>
-            </TouchableOpacity>
 
-            <View style={styles.dividerWrapper}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>hoặc</Text>
-              <View style={styles.divider} />
+                <View style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.welcomeTitle}>Chào mừng trở lại</Text>
+                    <Text style={styles.welcomeSubtitle}>
+                      Đăng nhập để khám phá các câu lạc bộ
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.googleButtonWrapper}
+                    onPress={handleGoogleLogin}
+                    disabled={loginMutation.isPending}
+                  >
+                    <View style={styles.googleButtonInner}>
+                      <View style={styles.googleIconPlaceholder}>
+                        <Text style={styles.googleIconLetter}>G</Text>
+                      </View>
+                      <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <View style={styles.dividerWrapper}>
+                    <View style={styles.divider} />
+                    <Text style={styles.dividerText}>hoặc</Text>
+                    <View style={styles.divider} />
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Nhập email của bạn"
+                      placeholderTextColor="rgba(255,255,255,0.35)"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      value={email}
+                      onChangeText={setEmail}
+                      editable={!loginMutation.isPending}
+                    />
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Mật khẩu</Text>
+                    <View style={styles.passwordContainer}>
+                      <TextInput
+                        style={styles.passwordInput}
+                        placeholder="Nhập mật khẩu của bạn"
+                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        secureTextEntry={!showPassword}
+                        value={password}
+                        onChangeText={setPassword}
+                        editable={!loginMutation.isPending}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                        style={styles.eyeButton}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.eyeIcon}>
+                          {showPassword ? '👁️' : '👁️‍🗨️'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.rowBetween}>
+                    <TouchableOpacity
+                      style={styles.rememberWrapper}
+                      onPress={() => setRememberMe(!rememberMe)}
+                      activeOpacity={0.8}
+                      disabled={loginMutation.isPending}
+                    >
+                      <View
+                        style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
+                      />
+                      <Text style={styles.rememberText}>Ghi nhớ đăng nhập</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      onPress={handleForgotPassword} 
+                      activeOpacity={0.8}
+                      disabled={loginMutation.isPending}
+                    >
+                      <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={[
+                      styles.signInButtonWrapper,
+                      loginMutation.isPending && styles.signInButtonDisabled
+                    ]}
+                    onPress={handleLogin}
+                    disabled={loginMutation.isPending}
+                  >
+                    <LinearGradient
+                      colors={loginMutation.isPending ? ["#9D8DE2", "#C09BC8"] : ["#5D2DE2", "#F05BC8"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.signInGradient}
+                    >
+                      {loginMutation.isPending ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.signInText}>Đăng nhập</Text>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <View style={styles.footerTextWrapper}>
+                    <Text style={styles.footerTextNormal}>Chưa có tài khoản? </Text>
+                    <TouchableOpacity 
+                      onPress={handleSignUp} 
+                      activeOpacity={0.8}
+                      disabled={loginMutation.isPending}
+                    >
+                      <Text style={styles.footerTextLink}>Đăng ký</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
             </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Nhập email của bạn"
-                placeholderTextColor="rgba(255,255,255,0.35)"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-                editable={!loginMutation.isPending}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Mật khẩu</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Nhập mật khẩu của bạn"
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  editable={!loginMutation.isPending}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeButton}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.eyeIcon}>
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.rowBetween}>
-              <TouchableOpacity
-                style={styles.rememberWrapper}
-                onPress={() => setRememberMe(!rememberMe)}
-                activeOpacity={0.8}
-                disabled={loginMutation.isPending}
-              >
-                <View
-                  style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
-                />
-                <Text style={styles.rememberText}>Ghi nhớ đăng nhập</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                onPress={handleForgotPassword} 
-                activeOpacity={0.8}
-                disabled={loginMutation.isPending}
-              >
-                <Text style={styles.forgotText}>Quên mật khẩu?</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={[
-                styles.signInButtonWrapper,
-                loginMutation.isPending && styles.signInButtonDisabled
-              ]}
-              onPress={handleLogin}
-              disabled={loginMutation.isPending}
-            >
-              <LinearGradient
-                colors={loginMutation.isPending ? ["#9D8DE2", "#C09BC8"] : ["#5D2DE2", "#F05BC8"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.signInGradient}
-              >
-                {loginMutation.isPending ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.signInText}>Đăng nhập</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <View style={styles.footerTextWrapper}>
-              <Text style={styles.footerTextNormal}>Chưa có tài khoản? </Text>
-              <TouchableOpacity 
-                onPress={handleSignUp} 
-                activeOpacity={0.8}
-                disabled={loginMutation.isPending}
-              >
-                <Text style={styles.footerTextLink}>Đăng ký</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -259,7 +272,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 200,
+    paddingBottom: 40,
   },
   logoWrapper: {
     alignItems: 'center',

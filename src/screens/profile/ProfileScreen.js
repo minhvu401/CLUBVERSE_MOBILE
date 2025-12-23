@@ -3,21 +3,27 @@ import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLogout } from '../../hooks/useAuth';
 import { userService } from '../../services/userService';
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = ({ navigation, prefetchedUser }) => {
   const [user, setUser] = useState(null);
   const logoutMutation = useLogout();
   const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (prefetchedUser) {
+      setUser(prefetchedUser);
+    }
+  }, [prefetchedUser]);
 
   useEffect(() => {
     let isMounted = true;

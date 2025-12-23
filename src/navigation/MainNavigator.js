@@ -7,7 +7,7 @@ import ClubApplicationsScreen from '../screens/club/ClubApplicationsScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import MyApplicationsScreen from '../screens/profile/MyApplicationsScreen';
-import ProfileScreen from '../screens/profile/ProfileScreen';
+import ProfileEntryScreen from '../screens/profile/ProfileEntryScreen';
 
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
@@ -36,7 +36,7 @@ const ProfileStackNavigator = () => (
       headerShown: false,
     }}
   >
-    <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+    <ProfileStack.Screen name="ProfileMain" component={ProfileEntryScreen} />
     <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
     <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
     <ProfileStack.Screen name="ClubApplications" component={ClubApplicationsScreen} />

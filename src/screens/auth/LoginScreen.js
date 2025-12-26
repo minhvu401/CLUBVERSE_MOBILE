@@ -1,25 +1,26 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
 import { useLogin } from '../../hooks/useAuth';
+import { toast } from '../../utils/toast';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -54,32 +55,23 @@ const LoginScreen = ({ navigation }) => {
         password 
       });
 
-      Alert.alert(
-        'Thành công',
-        `Chào mừng ${response.user.fullName}!`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              if (navigation) {
-                // Redirect dựa trên role
-                navigation.replace('Main');
-              }
-            },
-          },
-        ]
-      );
+      toast.success(`Chào mừng ${response.user.fullName}!`);
+      
+      // Navigate sau khi hiển thị toast
+      setTimeout(() => {
+        if (navigation) {
+          // Redirect dựa trên role
+          navigation.replace('Main');
+        }
+      }, 500);
     } catch (error) {
-      Alert.alert(
-        'Đăng nhập thất bại',
-        error.message || 'Email hoặc mật khẩu không đúng'
-      );
+      toast.error(error.message || 'Email hoặc mật khẩu không đúng');
     }
   };
 
   const handleGoogleLogin = () => {
     // TODO: Tích hợp Google Login
-    Alert.alert('Thông báo', 'Tính năng đăng nhập Google đang được phát triển');
+    toast.info('Tính năng đăng nhập Google đang được phát triển');
   };
 
   const handleForgotPassword = () => {

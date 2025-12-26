@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -16,10 +15,11 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View
-} from 'react-native';
+ } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
 import { useResendOTP, useVerifyOTP } from '../../hooks/useAuth';
+import { toast } from '../../utils/toast';
 
 const OTPVerificationScreen = ({ route, navigation }) => {
   const { email } = route.params || {};
@@ -83,12 +83,12 @@ const OTPVerificationScreen = ({ route, navigation }) => {
     const otpCode = otp.join('');
     
     if (otpCode.length !== 6) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ 6 số OTP');
+      toast.error('Vui lòng nhập đầy đủ 6 số OTP');
       return;
     }
 
     if (!normalizedEmail) {
-      Alert.alert('Lỗi', 'Email không hợp lệ');
+      toast.error('Email không hợp lệ');
       return;
     }
 
@@ -99,20 +99,10 @@ const OTPVerificationScreen = ({ route, navigation }) => {
         otp: otpCode,
       });
 
-      Alert.alert(
-        'Thành công',
-        'Xác thực email thành công! Bạn có thể đăng nhập ngay.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.replace('Login');
-            },
-          },
-        ]
-      );
+      toast.success('Xác thực email thành công! Bạn có thể đăng nhập ngay.');
+      navigation.replace('Login');
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Mã OTP không đúng. Vui lòng thử lại.');
+      toast.error(error.message || 'Mã OTP không đúng. Vui lòng thử lại.');
       // Clear OTP on error
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
@@ -121,7 +111,7 @@ const OTPVerificationScreen = ({ route, navigation }) => {
 
   const handleResendOTP = async () => {
     if (!normalizedEmail) {
-      Alert.alert('Lỗi', 'Email không hợp lệ');
+      toast.error('Email không hợp lệ');
       return;
     }
 
@@ -131,9 +121,9 @@ const OTPVerificationScreen = ({ route, navigation }) => {
       setCanResend(false);
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
-      Alert.alert('Thành công', 'Mã OTP mới đã được gửi đến email của bạn');
+      toast.success('Mã OTP mới đã được gửi đến email của bạn');
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Không thể gửi lại mã OTP. Vui lòng thử lại.');
+      toast.error(error.message || 'Không thể gửi lại mã OTP. Vui lòng thử lại.');
     }
   };
 

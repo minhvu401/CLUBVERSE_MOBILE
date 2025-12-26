@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View } from 'react-native';
 
 import ClubApplicationsScreen from '../screens/club/ClubApplicationsScreen';
-import HomeScreen from '../screens/home/HomeScreen';
+import HomeEntryScreen from '../screens/home/HomeEntryScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import MyApplicationsScreen from '../screens/profile/MyApplicationsScreen';
 import ProfileEntryScreen from '../screens/profile/ProfileEntryScreen';
@@ -69,7 +69,7 @@ const MainNavigator = () => {
         },
       })}
     >
-      <Tab.Screen name="Trang chủ" component={HomeScreen} />
+      <Tab.Screen name="Trang chủ" component={HomeEntryScreen} />
       <Tab.Screen name="Sự kiện" component={EventsScreen} />
       <Tab.Screen name="Khám phá" component={ExploreScreen} />
       <Tab.Screen name="Diễn đàn" component={ForumScreen} />

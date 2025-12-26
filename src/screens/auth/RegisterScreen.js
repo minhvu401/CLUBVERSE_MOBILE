@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -20,6 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
 import { useRegister } from '../../hooks/useAuth';
+import { toast } from '../../utils/toast';
 
 const RegisterScreen = () => {
   // Standard navigation hook
@@ -51,58 +51,55 @@ const RegisterScreen = () => {
 
   const validateForm = () => {
     if (!formData.fullName.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập họ tên đầy đủ');
+      toast.error('Vui lòng nhập họ tên đầy đủ');
       return false;
     }
 
     const trimmedEmail = formData.email.trim();
 
     if (!trimmedEmail) {
-      Alert.alert('Lỗi', 'Vui lòng nhập email');
+      toast.error('Vui lòng nhập email');
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      Alert.alert('Lỗi', 'Định dạng email không hợp lệ');
+      toast.error('Định dạng email không hợp lệ');
       return false;
     }
 
     if (!formData.phoneNumber.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
+      toast.error('Vui lòng nhập số điện thoại');
       return false;
     }
 
     if (!formData.school.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập trường học/đại học');
+      toast.error('Vui lòng nhập trường học/đại học');
       return false;
     }
 
     if (!formData.major.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập chuyên ngành');
+      toast.error('Vui lòng nhập chuyên ngành');
       return false;
     }
 
     if (!formData.password.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng tạo mật khẩu');
+      toast.error('Vui lòng tạo mật khẩu');
       return false;
     }
 
     if (formData.password.length < 6) {
-      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự');
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Lỗi', 'Mật khẩu không khớp');
+      toast.error('Mật khẩu không khớp');
       return false;
     }
 
     if (!agreeTerms) {
-      Alert.alert(
-        'Lỗi',
-        'Vui lòng đồng ý với Điều khoản & Điều kiện và Chính sách Bảo mật'
-      );
+      toast.error('Vui lòng đồng ý với Điều khoản & Điều kiện và Chính sách Bảo mật');
       return false;
     }
 
@@ -130,13 +127,10 @@ const RegisterScreen = () => {
       if (navigation && navigation.navigate) {
         navigation.navigate('OTPVerification', { email: trimmedEmail });
       } else {
-        Alert.alert(
-          'Thành công',
-          'Đăng ký thành công! Vui lòng kiểm tra email để xác thực.'
-        );
+        toast.success('Đăng ký thành công! Vui lòng kiểm tra email để xác thực.');
       }
     } catch (error) {
-      Alert.alert('Đăng ký thất bại', error.message || 'Vui lòng thử lại');
+      toast.error(error.message || 'Đăng ký thất bại, vui lòng thử lại');
     }
   };
 

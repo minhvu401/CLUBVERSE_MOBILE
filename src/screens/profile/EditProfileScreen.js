@@ -1,19 +1,19 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { userService } from '../../services/userService';
+import { toast } from '../../utils/toast';
 
 const EditProfileScreen = ({ navigation, route }) => {
   const { user } = route.params || {};
@@ -90,21 +90,17 @@ const EditProfileScreen = ({ navigation, route }) => {
 
   const handleSave = async () => {
     if (!formData.fullName.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập họ và tên');
+      toast.error('Vui lòng nhập họ và tên');
       return;
     }
 
     try {
       setLoading(true);
       await userService.updateProfile(formData);
-      Alert.alert('Thành công', 'Cập nhật hồ sơ thành công', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      toast.success('Cập nhật hồ sơ thành công');
+      navigation.goBack();
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Không thể cập nhật hồ sơ');
+      toast.error(error.message || 'Không thể cập nhật hồ sơ');
     } finally {
       setLoading(false);
     }

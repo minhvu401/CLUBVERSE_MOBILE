@@ -1,7 +1,7 @@
+/* eslint-disable no-unused-vars */
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   Dimensions,
   ScrollView,
   StyleSheet,
@@ -10,10 +10,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import { applicationService } from '../../services/applicationService';
 import { authService } from '../../services/authService';
 import { clubService } from '../../services/clubService';
-
+import { toast } from '../../utils/toast';
 const { width } = Dimensions.get('window');
 
 const RECOMMEND_CARD_WIDTH = width * 0.78;
@@ -64,6 +65,8 @@ const HomeScreen = () => {
   const [userName, setUserName] = useState('');
   const [clubs, setClubs] = useState([]);
   const [loadingClubs, setLoadingClubs] = useState(true);
+  const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
+  const [selectedClub, setSelectedClub] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -94,30 +97,30 @@ const HomeScreen = () => {
   }, []);
 
   const handleApplyToClub = (club) => {
-    Alert.alert(
-      'Tham gia CLB',
-      `Bạn có chắc chắn muốn gửi đơn gia nhập "${club.fullName}"?`,
-      [
-        {
-          text: 'Hủy',
-          style: 'cancel',
-        },
-        {
-          text: 'Gửi đơn',
-          onPress: async () => {
-            try {
-              await applicationService.createApplication(
-                club._id,
-                'Em rất mong muốn được tham gia và đóng góp cho câu lạc bộ.'
-              );
-              Alert.alert('Thành công', 'Đã gửi đơn gia nhập CLB.');
-            } catch (error) {
-              Alert.alert('Lỗi', error.message || 'Không thể gửi đơn gia nhập.');
-            }
-          },
-        },
-      ]
-    );
+    setSelectedClub(club);
+    setConfirmDialogVisible(true);
+  };
+
+  const handleConfirmJoin = async () => {
+    if (!selectedClub) return;
+    
+    setConfirmDialogVisible(false);
+    try {
+      await applicationService.createApplication(
+        selectedClub._id,
+        'Em rất mong muốn được tham gia và đóng góp cho câu lạc bộ.'
+      );
+      toast.success('Đã gửi đơn gia nhập CLB.');
+    } catch (error) {
+      toast.error(error.message || 'Không thể gửi đơn gia nhập.');
+    } finally {
+      setSelectedClub(null);
+    }
+  };
+
+  const handleCancelJoin = () => {
+    setConfirmDialogVisible(false);
+    setSelectedClub(null);
   };
 
   return (
@@ -274,6 +277,17 @@ const HomeScreen = () => {
             </View>
           </View>
         </ScrollView>
+
+        <ConfirmationDialog
+          visible={confirmDialogVisible}
+          title="Tham gia CLB"
+          message={`Bạn có chắc chắn muốn gửi đơn gia nhập "${selectedClub?.fullName || ''}"?`}
+          confirmText="Gửi đơn"
+          cancelText="Hủy"
+          onConfirm={handleConfirmJoin}
+          onCancel={handleCancelJoin}
+          type="default"
+        />
       </SafeAreaView>
     </LinearGradient>
   );

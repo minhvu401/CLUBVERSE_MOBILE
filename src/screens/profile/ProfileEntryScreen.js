@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { useLogout } from '../../hooks/useAuth';
 import { userService } from '../../services/userService';
+import { toast } from '../../utils/toast';
 import ClubProfileScreen from '../club/ClubProfileScreen';
 import ProfileScreen from './ProfileScreen';
 
@@ -20,7 +21,7 @@ const ProfileEntryScreen = ({ navigation }) => {
           setProfile(profileData);
         }
       } catch (error) {
-        Alert.alert('Lỗi', error.message || 'Không thể tải hồ sơ.');
+        toast.error(error.message || 'Không thể tải hồ sơ.');
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -40,7 +41,7 @@ const ProfileEntryScreen = ({ navigation }) => {
       await logoutMutation.mutateAsync();
       navigation?.replace('Login');
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Không thể đăng xuất.');
+      toast.error(error.message || 'Không thể đăng xuất.');
     }
   };
 

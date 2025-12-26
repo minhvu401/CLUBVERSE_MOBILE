@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -14,9 +13,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import { useLogout } from '../../hooks/useAuth';
 import { applicationService } from '../../services/applicationService';
 import { authService } from '../../services/authService';
+import { toast } from '../../utils/toast';
 
 const ClubApplicationsScreen = ({ navigation }) => {
   const [applications, setApplications] = useState([]);
@@ -46,6 +47,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
   const [finalDecisionModalVisible, setFinalDecisionModalVisible] = useState(false);
   const [selectedFinalDecisionAppId, setSelectedFinalDecisionAppId] = useState(null);
   const [selectedFinalDecisionUserName, setSelectedFinalDecisionUserName] = useState('');
+  const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -61,12 +63,12 @@ const ClubApplicationsScreen = ({ navigation }) => {
             setClubId(id);
           } else {
             console.error('Club ID not found in user object:', user);
-            Alert.alert('Lỗi', 'Không tìm thấy ID của club');
+            toast.error('Không tìm thấy ID của club');
           }
         }
       } catch (error) {
         console.error('Error loading club ID:', error);
-        Alert.alert('Lỗi', 'Không thể tải thông tin club');
+        toast.error(error.message || 'Không thể tải thông tin club');
       }
     };
 
@@ -97,7 +99,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
             (app) => app.status === 'ACCEPTED'
           ).length || 0;
           const rejected = response.applications?.filter(
-            (app) => app.status === 'REJECTED'
+            (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
           ).length || 0;
 
           setStats({ total, pending, approved, accepted, rejected });
@@ -105,7 +107,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
       } catch (error) {
         console.error('Error loading applications:', error);
         if (isMounted) {
-          Alert.alert('Lỗi', error.message || 'Không thể tải danh sách đơn');
+          toast.error(error.message || 'Không thể tải danh sách đơn');
         }
       } finally {
         if (isMounted) {
@@ -134,12 +136,12 @@ const ClubApplicationsScreen = ({ navigation }) => {
 
   const confirmApprove = async () => {
     if (!interviewDate.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập ngày phỏng vấn');
+      toast.error('Vui lòng nhập ngày phỏng vấn');
       return;
     }
 
     if (!interviewLocation.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập địa điểm phỏng vấn');
+      toast.error('Vui lòng nhập địa điểm phỏng vấn');
       return;
     }
 
@@ -150,7 +152,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
       const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/);
 
       if (!dateMatch) {
-        Alert.alert('Lỗi', 'Ngày phỏng vấn không đúng định dạng YYYY-MM-DD HH:mm');
+        toast.error('Ngày phỏng vấn không đúng định dạng YYYY-MM-DD HH:mm');
         return;
       }
 
@@ -174,7 +176,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
         minuteNum >= 0 &&
         minuteNum <= 59;
       if (!isValidRange) {
-        Alert.alert('Lỗi', 'Ngày phỏng vấn không hợp lệ (kiểm tra tháng/ngày/giờ/phút)');
+        toast.error('Ngày phỏng vấn không hợp lệ (kiểm tra tháng/ngày/giờ/phút)');
         return;
       }
 
@@ -188,7 +190,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
         date.getHours() !== hourNum ||
         date.getMinutes() !== minuteNum
       ) {
-        Alert.alert('Lỗi', 'Ngày phỏng vấn không hợp lệ (sai định dạng hoặc giá trị)');
+        toast.error('Ngày phỏng vấn không hợp lệ (sai định dạng hoặc giá trị)');
         return;
       }
 
@@ -227,14 +229,14 @@ const ClubApplicationsScreen = ({ navigation }) => {
         (app) => app.status === 'ACCEPTED'
       ).length || 0;
       const rejected = response.applications?.filter(
-        (app) => app.status === 'REJECTED'
+        (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
       ).length || 0;
 
       setStats({ total, pending, approved, accepted, rejected });
 
-      Alert.alert('Thành công', 'Đã phê duyệt đơn và gửi lịch phỏng vấn');
+      toast.success('Đã phê duyệt đơn và gửi lịch phỏng vấn');
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Không thể phê duyệt đơn');
+      toast.error(error.message || 'Không thể phê duyệt đơn');
     }
   };
 
@@ -247,7 +249,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
 
   const confirmReject = async () => {
     if (!rejectReason.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập lý do từ chối');
+      toast.error('Vui lòng nhập lý do từ chối');
       return;
     }
 
@@ -268,14 +270,14 @@ const ClubApplicationsScreen = ({ navigation }) => {
         (app) => app.status === 'APPROVED'
       ).length || 0;
       const rejected = response.applications?.filter(
-        (app) => app.status === 'REJECTED'
+        (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
       ).length || 0;
 
       setStats({ total, pending, approved, rejected });
 
-      Alert.alert('Thành công', 'Đã từ chối đơn gia nhập');
+      toast.success('Đã từ chối đơn gia nhập');
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Không thể từ chối đơn');
+      toast.error(error.message || 'Không thể từ chối đơn');
     }
   };
 
@@ -309,14 +311,16 @@ const ClubApplicationsScreen = ({ navigation }) => {
         (app) => app.status === 'ACCEPTED'
       ).length || 0;
       const rejected = response.applications?.filter(
-        (app) => app.status === 'REJECTED'
+        (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
       ).length || 0;
 
       setStats({ total, pending, approved, accepted, rejected });
 
-      Alert.alert('Thành công', decision === 'accepted' ? 'Đã chấp nhận thành viên' : 'Đã từ chối thành viên');
+      toast.success(
+        decision === 'accepted' ? 'Đã chấp nhận thành viên' : 'Đã từ chối thành viên'
+      );
     } catch (error) {
-      Alert.alert('Lỗi', error.message || 'Không thể thực hiện xác nhận cuối cùng');
+      toast.error(error.message || 'Không thể thực hiện xác nhận cuối cùng');
     }
   };
 
@@ -406,6 +410,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
       case 'ACCEPTED':
         return '#10B981';
       case 'REJECTED':
+      case 'DECLINED':
         return '#EF4444';
       default:
         return '#94A3B8';
@@ -421,6 +426,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
       case 'ACCEPTED':
         return 'Đã chấp nhận';
       case 'REJECTED':
+      case 'DECLINED':
         return 'Đã từ chối';
       default:
         return status;
@@ -435,6 +441,10 @@ const ClubApplicationsScreen = ({ navigation }) => {
   const filteredApplications = useMemo(() => {
     if (statusFilter === 'ALL') {
       return applications;
+    }
+    if (statusFilter === 'REJECTED') {
+      // Filter includes both REJECTED and DECLINED
+      return applications.filter((app) => app.status === 'REJECTED' || app.status === 'DECLINED');
     }
     return applications.filter((app) => app.status === statusFilter);
   }, [statusFilter, applications]);
@@ -477,12 +487,12 @@ const ClubApplicationsScreen = ({ navigation }) => {
                       (app) => app.status === 'ACCEPTED'
                     ).length || 0;
                     const rejected = response.applications?.filter(
-                      (app) => app.status === 'REJECTED'
+                      (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
                     ).length || 0;
 
                     setStats({ total, pending, approved, accepted, rejected });
                   } catch (error) {
-                    Alert.alert('Lỗi', error.message || 'Không thể tải danh sách đơn');
+                    toast.error(error.message || 'Không thể tải danh sách đơn');
                   } finally {
                     setLoading(false);
                   }
@@ -494,32 +504,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.logoutButton}
-                onPress={async () => {
-                  Alert.alert(
-                    'Xác nhận',
-                    'Bạn có chắc chắn muốn đăng xuất?',
-                    [
-                      {
-                        text: 'Hủy',
-                        style: 'cancel',
-                      },
-                      {
-                        text: 'Đăng xuất',
-                        style: 'destructive',
-                        onPress: async () => {
-                          try {
-                            await logoutMutation.mutateAsync();
-                            if (navigation) {
-                              navigation.replace('Login');
-                            }
-                          } catch (error) {
-                            Alert.alert('Lỗi', error.message || 'Không thể đăng xuất');
-                          }
-                        },
-                      },
-                    ]
-                  );
-                }}
+                onPress={() => setLogoutDialogVisible(true)}
                 disabled={logoutMutation.isPending}
                 activeOpacity={0.8}
               >
@@ -736,7 +721,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
                         </Text>
                       </View>
 
-                      {application.status === 'REJECTED' && application.rejectionReason && (
+                      {(application.status === 'REJECTED' || application.status === 'DECLINED') && application.rejectionReason && (
                         <View style={styles.rejectionReasonSection}>
                           <Text style={styles.rejectionReasonLabel}>Lý do từ chối:</Text>
                           <Text style={styles.rejectionReasonText}>
@@ -998,6 +983,27 @@ const ClubApplicationsScreen = ({ navigation }) => {
             </View>
           </TouchableOpacity>
         </Modal>
+
+        <ConfirmationDialog
+          visible={logoutDialogVisible}
+          title="Xác nhận"
+          message="Bạn có chắc chắn muốn đăng xuất?"
+          confirmText="Đăng xuất"
+          cancelText="Hủy"
+          onConfirm={async () => {
+            setLogoutDialogVisible(false);
+            try {
+              await logoutMutation.mutateAsync();
+              if (navigation) {
+                navigation.replace('Login');
+              }
+            } catch (error) {
+              toast.error(error.message || 'Không thể đăng xuất');
+            }
+          }}
+          onCancel={() => setLogoutDialogVisible(false)}
+          type="danger"
+        />
       </SafeAreaView>
     </LinearGradient>
   );

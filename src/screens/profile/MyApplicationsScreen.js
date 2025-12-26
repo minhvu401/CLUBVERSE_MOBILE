@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +10,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import { applicationService } from '../../services/applicationService';
+import { toast } from '../../utils/toast';
 
 const MyApplicationsScreen = ({ navigation }) => {
   const [applications, setApplications] = useState([]);
@@ -22,6 +23,10 @@ const MyApplicationsScreen = ({ navigation }) => {
     approved: 0,
     rejected: 0,
   });
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [filterDropdownVisible, setFilterDropdownVisible] = useState(false);
+  const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
+  const [applicationToCancel, setApplicationToCancel] = useState(null);
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -40,10 +45,10 @@ const MyApplicationsScreen = ({ navigation }) => {
             (app) => app.status === 'PENDING'
           ).length || 0;
           const approved = response.applications?.filter(
-            (app) => app.status === 'APPROVED'
+            (app) => app.status === 'APPROVED' || app.status === 'ACCEPTED'
           ).length || 0;
           const rejected = response.applications?.filter(
-            (app) => app.status === 'REJECTED'
+            (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
           ).length || 0;
 
           setStats({ total, pending, approved, rejected });
@@ -51,7 +56,7 @@ const MyApplicationsScreen = ({ navigation }) => {
       } catch (error) {
         console.error('Error loading applications:', error);
         if (isMounted) {
-          Alert.alert('Lỗi', error.message || 'Không thể tải danh sách đơn');
+          toast.error(error.message || 'Không thể tải danh sách đơn');
         }
       } finally {
         if (isMounted) {
@@ -70,45 +75,44 @@ const MyApplicationsScreen = ({ navigation }) => {
   }, [isFocused]);
 
   const handleCancelApplication = async (applicationId, clubName) => {
-    Alert.alert(
-      'Xác nhận',
-      `Bạn có chắc chắn muốn hủy đơn gia nhập "${clubName}"?`,
-      [
-        {
-          text: 'Hủy',
-          style: 'cancel',
-        },
-        {
-          text: 'Xác nhận',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await applicationService.cancelApplication(applicationId);
-              // Reload applications
-              const response = await applicationService.getMyApplications();
-              setApplications(response.applications || []);
+    setApplicationToCancel({ id: applicationId, clubName });
+    setCancelDialogVisible(true);
+  };
 
-              const total = response.total || 0;
-              const pending = response.applications?.filter(
-                (app) => app.status === 'PENDING'
-              ).length || 0;
-              const approved = response.applications?.filter(
-                (app) => app.status === 'APPROVED'
-              ).length || 0;
+  const confirmCancelApplication = async () => {
+    if (!applicationToCancel) return;
+    
+    setCancelDialogVisible(false);
+    try {
+      await applicationService.cancelApplication(applicationToCancel.id);
+      // Reload applications
+      const response = await applicationService.getMyApplications();
+      setApplications(response.applications || []);
+
+      const total = response.total || 0;
+      const pending = response.applications?.filter(
+        (app) => app.status === 'PENDING'
+      ).length || 0;
+      const approved = response.applications?.filter(
+        (app) => app.status === 'APPROVED' || app.status === 'ACCEPTED'
+      ).length || 0;
               const rejected = response.applications?.filter(
-                (app) => app.status === 'REJECTED'
+                (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
               ).length || 0;
 
               setStats({ total, pending, approved, rejected });
 
-              Alert.alert('Thành công', 'Đã hủy đơn gia nhập');
+              toast.success('Đã hủy đơn gia nhập');
             } catch (error) {
-              Alert.alert('Lỗi', error.message || 'Không thể hủy đơn');
+              toast.error(error.message || 'Không thể hủy đơn');
+            } finally {
+              setApplicationToCancel(null);
             }
-          },
-        },
-      ]
-    );
+  };
+
+  const cancelCancelApplication = () => {
+    setCancelDialogVisible(false);
+    setApplicationToCancel(null);
   };
 
   const formatDate = (dateString) => {
@@ -124,8 +128,10 @@ const MyApplicationsScreen = ({ navigation }) => {
       case 'PENDING':
         return '#FACC6B';
       case 'APPROVED':
+      case 'ACCEPTED':
         return '#34C25E';
       case 'REJECTED':
+      case 'DECLINED':
         return '#EF4444';
       default:
         return '#94A3B8';
@@ -139,11 +145,32 @@ const MyApplicationsScreen = ({ navigation }) => {
       case 'APPROVED':
         return 'Đã phê duyệt';
       case 'REJECTED':
+      case 'DECLINED':
         return 'Đã từ chối';
       default:
         return status;
     }
   };
+
+  const handleFilterChange = (newFilter) => {
+    setStatusFilter(newFilter);
+    setFilterDropdownVisible(false);
+  };
+
+  const filteredApplications = (() => {
+    if (statusFilter === 'ALL') return applications;
+    if (statusFilter === 'REJECTED') {
+      return applications.filter(
+        (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
+      );
+    }
+    if (statusFilter === 'APPROVED') {
+      return applications.filter(
+        (app) => app.status === 'APPROVED' || app.status === 'ACCEPTED'
+      );
+    }
+    return applications.filter((app) => app.status === statusFilter);
+  })();
 
   return (
     <LinearGradient
@@ -177,13 +204,12 @@ const MyApplicationsScreen = ({ navigation }) => {
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats.pending}</Text>
                 <Text style={styles.statLabel}>Chờ duyệt</Text>
-
+                
               </View>
 
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats.approved}</Text>
                 <Text style={styles.statLabel}>Đã phê duyệt</Text>
-
               </View>
 
               <View style={styles.statCard}>
@@ -194,14 +220,101 @@ const MyApplicationsScreen = ({ navigation }) => {
               <View style={styles.statCard}>
                 <Text style={styles.statNumber}>{stats.total}</Text>
                 <Text style={styles.statLabel}>Tổng đơn</Text>
-
               </View>
             </View>
 
             <View style={styles.sectionWrapper}>
-              <Text style={styles.sectionTitle}>Đơn Đăng Ký Của Tôi</Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Đơn Đăng Ký Của Tôi</Text>
+                <View style={styles.filterDropdownContainer}>
+                  <TouchableOpacity
+                    style={styles.filterDropdownButton}
+                    onPress={() => setFilterDropdownVisible(!filterDropdownVisible)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.filterDropdownText}>
+                      {statusFilter === 'ALL' && 'Tất cả trạng thái'}
+                      {statusFilter === 'PENDING' && 'Chờ duyệt'}
+                      {statusFilter === 'APPROVED' && 'Đã phê duyệt'}
+                      {statusFilter === 'REJECTED' && 'Đã từ chối'}
+                    </Text>
+                    <Text style={styles.filterDropdownIcon}>
+                      {filterDropdownVisible ? '▲' : '▼'}
+                    </Text>
+                  </TouchableOpacity>
 
-              {applications.length === 0 ? (
+                  {filterDropdownVisible && (
+                    <View style={styles.filterDropdownMenu}>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'ALL' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('ALL')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'ALL' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Tất cả trạng thái
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'PENDING' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('PENDING')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'PENDING' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Chờ duyệt
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'APPROVED' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('APPROVED')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'APPROVED' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Đã phê duyệt
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterDropdownItem,
+                          statusFilter === 'REJECTED' && styles.filterDropdownItemActive,
+                        ]}
+                        onPress={() => handleFilterChange('REJECTED')}
+                      >
+                        <Text
+                          style={[
+                            styles.filterDropdownItemText,
+                            statusFilter === 'REJECTED' && styles.filterDropdownItemTextActive,
+                          ]}
+                        >
+                          Đã từ chối
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {filteredApplications.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>
                     Bạn chưa có đơn gia nhập nào
@@ -209,7 +322,7 @@ const MyApplicationsScreen = ({ navigation }) => {
                 </View>
               ) : (
                 <View style={styles.applicationsList}>
-                  {applications.map((application) => (
+                  {filteredApplications.map((application) => (
                     <View key={application._id} style={styles.applicationCard}>
                       <View style={styles.applicationHeader}>
                         <View style={styles.clubInfo}>
@@ -274,6 +387,17 @@ const MyApplicationsScreen = ({ navigation }) => {
             </View>
           </ScrollView>
         )}
+
+        <ConfirmationDialog
+          visible={cancelDialogVisible}
+          title="Xác nhận"
+          message={`Bạn có chắc chắn muốn hủy đơn gia nhập "${applicationToCancel?.clubName || ''}"?`}
+          confirmText="Xác nhận"
+          cancelText="Hủy"
+          onConfirm={confirmCancelApplication}
+          onCancel={cancelCancelApplication}
+          type="danger"
+        />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -353,6 +477,12 @@ const styles = StyleSheet.create({
   sectionWrapper: {
     marginBottom: 24,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -371,6 +501,68 @@ const styles = StyleSheet.create({
   },
   applicationsList: {
     gap: 12,
+  },
+  filterDropdownContainer: {
+    position: 'relative',
+    zIndex: 20,
+  },
+  filterDropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15,23,42,0.9)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.3)',
+    minWidth: 160,
+  },
+  filterDropdownText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
+    flex: 1,
+  },
+  filterDropdownIcon: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.7)',
+    marginLeft: 8,
+  },
+  filterDropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: 4,
+    backgroundColor: 'rgba(15,23,42,0.95)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.3)',
+    minWidth: 190,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+    zIndex: 20,
+  },
+  filterDropdownItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(148,163,184,0.1)',
+  },
+  filterDropdownItemActive: {
+    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+  },
+  filterDropdownItemText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+  },
+  filterDropdownItemTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   applicationCard: {
     backgroundColor: 'rgba(15,23,42,0.9)',

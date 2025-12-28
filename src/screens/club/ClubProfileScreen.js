@@ -1,19 +1,17 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ClubProfileScreen = ({ navigation, club, onLogout, isLoggingOut }) => {
-  const [joining, setJoining] = useState(false);
-
-  const posts = club?.posts || [];
+  const posts = useMemo(() => club?.posts || [], [club?.posts]);
   const socialLinks = club?.socialLink || [];
   const isVerified = club?.isVerified;
   const createdAt = club?.createdAt;

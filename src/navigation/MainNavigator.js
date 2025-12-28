@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View } from 'react-native';
 
 import ClubApplicationsScreen from '../screens/club/ClubApplicationsScreen';
+import ForumScreen from '../screens/forum/ForumScreen';
 import HomeEntryScreen from '../screens/home/HomeEntryScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import MyApplicationsScreen from '../screens/profile/MyApplicationsScreen';
@@ -21,12 +22,6 @@ const EventsScreen = () => (
 const ExploreScreen = () => (
   <View style={styles.placeholderContainer}>
     <Text style={styles.placeholderText}>Khám phá</Text>
-  </View>
-);
-
-const ForumScreen = () => (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Diễn đàn</Text>
   </View>
 );
 

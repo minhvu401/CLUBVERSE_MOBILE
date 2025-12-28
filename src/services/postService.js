@@ -35,6 +35,42 @@ export const postService = {
     }
   },
 
+  // Get posts (public feed)
+  getPosts: async ({ clubId, sortBy = 'newest', limit = 20, skip = 0 } = {}) => {
+    try {
+      const params = {
+        ...(clubId ? { clubId } : {}),
+        sortBy,
+        limit,
+        skip,
+      };
+      const response = await api.get('/posts', { params });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  likePost: async (postId) => {
+    if (!postId) throw new Error('Thiếu id bài viết');
+    try {
+      const response = await api.post(`/posts/${postId}/like`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  unlikePost: async (postId) => {
+    if (!postId) throw new Error('Thiếu id bài viết');
+    try {
+      const response = await api.delete(`/posts/${postId}/unlike`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   deletePost: async (postId) => {
     try {
       const response = await api.delete(`/posts/${postId}`);

@@ -1,15 +1,16 @@
+import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
@@ -38,6 +39,7 @@ const ClubPostsScreen = () => {
   const [postToDelete, setPostToDelete] = useState(null);
   const [restoreDialogVisible, setRestoreDialogVisible] = useState(false);
   const [postToRestore, setPostToRestore] = useState(null);
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     let isMounted = true;
@@ -67,12 +69,14 @@ const ClubPostsScreen = () => {
       }
     };
 
-    loadInitial();
+    if (isFocused) {
+      loadInitial();
+    }
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isFocused]);
 
   const resetForm = () => {
     setTitle('');
@@ -338,7 +342,7 @@ const ClubPostsScreen = () => {
                         </Text>
                         <View style={styles.postHeaderRight}>
                           <View style={[styles.likeBadge, { marginRight: 6 }]}>
-                            <Text style={styles.likeIcon}>❤️</Text>
+                            <Text style={styles.likeIcon}>👍</Text>
                             <Text style={styles.likeText}>{likeCount}</Text>
                           </View>
                           <View style={styles.deletedBadge}>
@@ -396,7 +400,7 @@ const ClubPostsScreen = () => {
                           {post.title}
                         </Text>
                         <View style={styles.likeBadge}>
-                          <Text style={styles.likeIcon}>❤️</Text>
+                          <Text style={styles.likeIcon}>👍</Text>
                           <Text style={styles.likeText}>{likeCount}</Text>
                         </View>
                       </View>

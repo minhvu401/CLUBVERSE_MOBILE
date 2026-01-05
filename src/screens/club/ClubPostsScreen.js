@@ -2,15 +2,15 @@ import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
@@ -19,6 +19,7 @@ import { postService } from '../../services/postService';
 import { toast } from '../../utils/toast';
 
 const ClubPostsScreen = () => {
+  const isFocused = useIsFocused();
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
   const [clubName, setClubName] = useState('');

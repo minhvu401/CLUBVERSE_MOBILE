@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View } from 'react-native';
 
 import ClubApplicationsScreen from '../screens/club/ClubApplicationsScreen';
+import ForumScreen from '../screens/forum/ForumScreen';
 import EventsEntryScreen from '../screens/home/EventsEntryScreen';
 import HomeEntryScreen from '../screens/home/HomeEntryScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';

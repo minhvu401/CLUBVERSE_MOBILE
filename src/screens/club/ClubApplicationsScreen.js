@@ -51,8 +51,6 @@ const ClubApplicationsScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
 
   useEffect(() => {
-    let isMounted = true;
-
     const loadClubId = async () => {
       try {
         const user = await authService.getCurrentUser();

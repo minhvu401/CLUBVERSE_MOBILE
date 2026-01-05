@@ -19,12 +19,6 @@ const ExploreScreen = () => (
   </View>
 );
 
-const ForumScreen = () => (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Diễn đàn</Text>
-  </View>
-);
-
 const ProfileStackNavigator = () => (
   <ProfileStack.Navigator
     screenOptions={{

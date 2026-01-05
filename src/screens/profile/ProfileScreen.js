@@ -1,21 +1,26 @@
 
 import { useIsFocused } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLogout } from '../../hooks/useAuth';
 import { userService } from '../../services/userService';
+import { toast } from '../../utils/toast';
 
 const ProfileScreen = ({ navigation, prefetchedUser }) => {
   const [user, setUser] = useState(null);
+  const [isAvatarLoading, setIsAvatarLoading] = useState(false);
   const logoutMutation = useLogout();
   const isFocused = useIsFocused();
 
@@ -65,6 +70,69 @@ const ProfileScreen = ({ navigation, prefetchedUser }) => {
   const interests = user?.interests || [];
   const schedule = user?.schedule || {};
 
+  const refreshProfile = async () => {
+    try {
+      const profileData = await userService.getUserProfile();
+      setUser(profileData);
+    } catch (error) {
+      toast.error(error.message || 'Không thể tải hồ sơ.');
+    }
+  };
+
+  const pickAndUploadAvatar = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        toast.error('Cần cấp quyền truy cập thư viện ảnh');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+      const asset = result.assets?.[0];
+      const uri = asset?.uri;
+      const mimeType = asset?.mimeType;
+      const fileName = asset?.fileName;
+      if (!uri) return;
+
+      setIsAvatarLoading(true);
+      await userService.uploadAvatar(uri, mimeType || undefined, fileName);
+      await refreshProfile();
+      toast.success('Cập nhật ảnh đại diện thành công');
+    } catch (error) {
+      toast.error(error.message || 'Không thể cập nhật ảnh đại diện');
+    } finally {
+      setIsAvatarLoading(false);
+    }
+  };
+
+  const deleteAvatar = async () => {
+    try {
+      setIsAvatarLoading(true);
+      await userService.deleteAvatar();
+      await refreshProfile();
+      toast.success('Đã xóa ảnh đại diện');
+    } catch (error) {
+      toast.error(error.message || 'Không thể xóa ảnh đại diện');
+    } finally {
+      setIsAvatarLoading(false);
+    }
+  };
+
+  const handleAvatarPress = () => {
+    Alert.alert('Ảnh đại diện', undefined, [
+      { text: 'Đổi ảnh đại diện', onPress: pickAndUploadAvatar },
+      { text: 'Xóa ảnh đại diện', onPress: deleteAvatar },
+      { text: 'Hủy', style: 'cancel' },
+    ]);
+  };
+
   return (
     <LinearGradient
       colors={["#5D2DE2", "#020721"]}
@@ -84,11 +152,30 @@ const ProfileScreen = ({ navigation, prefetchedUser }) => {
             style={styles.headerCard}
           >
             <View style={styles.headerTopRow}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarInitial}>
-                  {fullName?.charAt(0)?.toUpperCase() || 'H'}
-                </Text>
-              </View>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.avatarWrapper}
+                onPress={handleAvatarPress}
+                disabled={isAvatarLoading}
+              >
+                <View style={styles.avatarCircle}>
+                  {user?.avatarUrl ? (
+                    <Image
+                      source={{ uri: user.avatarUrl }}
+                      style={styles.avatarImage}
+                    />
+                  ) : (
+                    <Text style={styles.avatarInitial}>
+                      {fullName?.charAt(0)?.toUpperCase() || 'H'}
+                    </Text>
+                  )}
+                  {isAvatarLoading && (
+                    <View style={styles.avatarLoading}>
+                      <ActivityIndicator size="small" color="#fff" />
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
 
               <View style={styles.headerInfo}>
                 <Text style={styles.headerName}>{fullName}</Text>

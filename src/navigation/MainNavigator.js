@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet, Text, View } from 'react-native';
 
 import ClubApplicationsScreen from '../screens/club/ClubApplicationsScreen';
-import ForumScreen from '../screens/forum/ForumScreen';
+import EventsEntryScreen from '../screens/home/EventsEntryScreen';
 import HomeEntryScreen from '../screens/home/HomeEntryScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import MyApplicationsScreen from '../screens/profile/MyApplicationsScreen';
@@ -12,12 +12,6 @@ import ProfileEntryScreen from '../screens/profile/ProfileEntryScreen';
 
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
-
-const EventsScreen = () => (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Sự kiện</Text>
-  </View>
-);
 
 const ExploreScreen = () => (
   <View style={styles.placeholderContainer}>
@@ -65,7 +59,7 @@ const MainNavigator = () => {
       })}
     >
       <Tab.Screen name="Trang chủ" component={HomeEntryScreen} />
-      <Tab.Screen name="Sự kiện" component={EventsScreen} />
+      <Tab.Screen name="Sự kiện" component={EventsEntryScreen} />
       <Tab.Screen name="Khám phá" component={ExploreScreen} />
       <Tab.Screen name="Diễn đàn" component={ForumScreen} />
       <Tab.Screen name="Hồ sơ" component={ProfileStackNavigator} />

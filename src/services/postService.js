@@ -99,6 +99,16 @@ export const postService = {
       throw error;
     }
   },
+
+  // Permanent delete (hard delete) a post
+  permanentDeletePost: async (postId) => {
+    try {
+      const response = await api.delete(`/posts/${postId}/permanent`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 

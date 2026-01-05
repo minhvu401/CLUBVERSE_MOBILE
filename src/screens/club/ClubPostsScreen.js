@@ -39,7 +39,8 @@ const ClubPostsScreen = () => {
   const [postToDelete, setPostToDelete] = useState(null);
   const [restoreDialogVisible, setRestoreDialogVisible] = useState(false);
   const [postToRestore, setPostToRestore] = useState(null);
-  const isFocused = useIsFocused();
+  const [permanentDeleteDialogVisible, setPermanentDeleteDialogVisible] = useState(false);
+  const [postToPermanentDelete, setPostToPermanentDelete] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -126,9 +127,20 @@ const ClubPostsScreen = () => {
           tags,
           images,
         });
-        setPosts((prev) =>
-          prev.map((p) => (p._id === editingPost._id ? (updated.post || updated) : p))
-        );
+        
+        // Reload danh sách bài viết từ server để đảm bảo sync với dữ liệu mới nhất (bao gồm tags đã được xử lý)
+        const user = await authService.getCurrentUser();
+        const clubId = user?._id || user?.id;
+        if (clubId) {
+          const response = await postService.getClubPosts(clubId);
+          setPosts(response.posts || response.data || []);
+        } else {
+          // Fallback: update local state nếu không reload được
+          setPosts((prev) =>
+            prev.map((p) => (p._id === editingPost._id ? (updated.post || updated) : p))
+          );
+        }
+        
         toast.success('Đã cập nhật bài viết');
       } else {
         const created = await postService.createPost({
@@ -231,6 +243,31 @@ const ClubPostsScreen = () => {
   const cancelRestorePost = () => {
     setRestoreDialogVisible(false);
     setPostToRestore(null);
+  };
+
+  const handlePermanentDeletePost = (postId) => {
+    setPostToPermanentDelete(postId);
+    setPermanentDeleteDialogVisible(true);
+  };
+
+  const confirmPermanentDeletePost = async () => {
+    if (!postToPermanentDelete) return;
+    
+    setPermanentDeleteDialogVisible(false);
+    try {
+      await postService.permanentDeletePost(postToPermanentDelete);
+      setDeletedPosts((prev) => prev.filter((p) => p._id !== postToPermanentDelete));
+      toast.success('Đã xóa vĩnh viễn bài viết');
+    } catch (error) {
+      toast.error(error.message || 'Không thể xóa vĩnh viễn bài viết');
+    } finally {
+      setPostToPermanentDelete(null);
+    }
+  };
+
+  const cancelPermanentDeletePost = () => {
+    setPermanentDeleteDialogVisible(false);
+    setPostToPermanentDelete(null);
   };
 
   const openDetailModal = (post) => {
@@ -372,6 +409,13 @@ const ClubPostsScreen = () => {
                           activeOpacity={0.85}
                         >
                           <Text style={styles.postRestoreText}>Khôi phục</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.postActionButton, styles.postDeleteButton]}
+                          onPress={() => handlePermanentDeletePost(post._id)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={styles.postDeleteText}>Xóa vĩnh viễn</Text>
                         </TouchableOpacity>
                       </View>
                     </TouchableOpacity>
@@ -602,6 +646,17 @@ const ClubPostsScreen = () => {
           onConfirm={confirmRestorePost}
           onCancel={cancelRestorePost}
           type="success"
+        />
+
+        <ConfirmationDialog
+          visible={permanentDeleteDialogVisible}
+          title="Xóa vĩnh viễn"
+          message="Bạn có chắc chắn muốn xóa vĩnh viễn bài viết này? Hành động này không thể hoàn tác."
+          confirmText="Xóa vĩnh viễn"
+          cancelText="Hủy"
+          onConfirm={confirmPermanentDeletePost}
+          onCancel={cancelPermanentDeletePost}
+          type="danger"
         />
       </SafeAreaView>
     </LinearGradient>

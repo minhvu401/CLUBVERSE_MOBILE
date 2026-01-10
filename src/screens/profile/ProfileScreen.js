@@ -4,14 +4,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLogout } from '../../hooks/useAuth';
@@ -163,6 +163,7 @@ const ProfileScreen = ({ navigation, prefetchedUser }) => {
                     <Image
                       source={{ uri: user.avatarUrl }}
                       style={styles.avatarImage}
+                      resizeMode="cover"
                     />
                   ) : (
                     <Text style={styles.avatarInitial}>

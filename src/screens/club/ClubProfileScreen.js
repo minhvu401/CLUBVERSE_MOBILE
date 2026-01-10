@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -78,9 +79,17 @@ const ClubProfileScreen = ({ navigation, club, onLogout, isLoggingOut }) => {
           >
             <View style={styles.headerTopRow}>
               <View style={styles.avatarCircle}>
-                <Text style={styles.avatarInitial}>
-                  {club?.fullName?.charAt(0)?.toUpperCase() || 'C'}
-                </Text>
+                {club?.avatar ? (
+                  <Image
+                    source={{ uri: club.avatar }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.avatarInitial}>
+                    {club?.fullName?.charAt(0)?.toUpperCase() || 'C'}
+                  </Text>
+                )}
               </View>
 
               <View style={styles.headerInfo}>
@@ -255,9 +264,17 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(15,23,42,0.9)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarInitial: {
     fontSize: 28,

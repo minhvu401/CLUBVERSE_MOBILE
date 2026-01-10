@@ -1,6 +1,33 @@
 import api from './api';
 
 export const eventService = {
+  // Get all events (public list)
+  getEvents: async ({ filter, clubId, limit, skip } = {}) => {
+    try {
+      const response = await api.get('/events', {
+        params: {
+          filter,
+          clubId,
+          limit,
+          skip,
+        },
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Register to join an event (student)
+  registerEvent: async (eventId) => {
+    try {
+      const response = await api.post(`/events/${eventId}/register`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Create a new event (for club role)
   createEvent: async (eventData) => {
     try {

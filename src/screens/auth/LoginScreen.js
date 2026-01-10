@@ -1,20 +1,19 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    ActivityIndicator,
+    Image,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,28 +30,36 @@ const LoginScreen = ({ navigation }) => {
   const loginMutation = useLogin();
 
   const handleLogin = async () => {
-    // Validation
-    if (!email.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập email');
-      return;
-    }
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
 
-    if (!password.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu');
+    // Validation
+    if (!trimmedEmail) {
+      toast.error('Vui lòng nhập email');
       return;
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Lỗi', 'Email không hợp lệ');
+    if (!emailRegex.test(trimmedEmail)) {
+      toast.error('Email không hợp lệ');
+      return;
+    }
+
+    if (!trimmedPassword) {
+      toast.error('Vui lòng nhập mật khẩu');
+      return;
+    }
+
+    if (trimmedPassword.length < 6) {
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự');
       return;
     }
 
     try {
       const response = await loginMutation.mutateAsync({ 
-        email: email.trim(), 
-        password 
+        email: trimmedEmail, 
+        password: trimmedPassword
       });
 
       toast.success(`Chào mừng ${response.user.fullName}!`);

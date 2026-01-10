@@ -1,9 +1,10 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { authService } from '../../services/authService';
 import ClubEventsScreen from '../club/ClubEventsScreen';
 import EventParticipantsScreen from '../club/EventParticipantsScreen';
+import StudentEventsScreen from '../events/StudentEventsScreen';
 
 const EventsStack = createNativeStackNavigator();
 
@@ -65,24 +66,8 @@ const EventsEntryScreen = () => {
     );
   }
 
-  // Nếu không phải club, hiển thị placeholder (có thể thêm EventsScreen cho student sau)
-  return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: '#020721',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <View style={{ padding: 20, alignItems: 'center' }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 18, marginBottom: 8 }}>Sự kiện</Text>
-        <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, textAlign: 'center' }}>
-          Tính năng đang được phát triển
-        </Text>
-      </View>
-    </View>
-  );
+  // Student/other role: hiển thị màn Events theo thiết kế
+  return <StudentEventsScreen />;
 };
 
 export default EventsEntryScreen;

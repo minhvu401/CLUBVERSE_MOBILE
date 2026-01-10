@@ -2,19 +2,19 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  Image,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    ActivityIndicator,
+    Image,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClubverseLogo from '../../assets/images/clubverse-logo.png';
@@ -50,12 +50,18 @@ const RegisterScreen = () => {
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) {
+    const trimmedFullName = formData.fullName.trim();
+    const trimmedEmail = formData.email.trim();
+    const trimmedPhone = formData.phoneNumber.trim();
+    const trimmedSchool = formData.school.trim();
+    const trimmedMajor = formData.major.trim();
+    const trimmedPassword = formData.password.trim();
+    const trimmedConfirm = formData.confirmPassword.trim();
+
+    if (!trimmedFullName) {
       toast.error('Vui lòng nhập họ tên đầy đủ');
       return false;
     }
-
-    const trimmedEmail = formData.email.trim();
 
     if (!trimmedEmail) {
       toast.error('Vui lòng nhập email');
@@ -68,32 +74,37 @@ const RegisterScreen = () => {
       return false;
     }
 
-    if (!formData.phoneNumber.trim()) {
+    if (!trimmedPhone) {
       toast.error('Vui lòng nhập số điện thoại');
       return false;
     }
+    const phoneRegex = /^[0-9]{8,15}$/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      toast.error('Số điện thoại chỉ gồm số và từ 8-15 ký tự');
+      return false;
+    }
 
-    if (!formData.school.trim()) {
+    if (!trimmedSchool) {
       toast.error('Vui lòng nhập trường học/đại học');
       return false;
     }
 
-    if (!formData.major.trim()) {
+    if (!trimmedMajor) {
       toast.error('Vui lòng nhập chuyên ngành');
       return false;
     }
 
-    if (!formData.password.trim()) {
+    if (!trimmedPassword) {
       toast.error('Vui lòng tạo mật khẩu');
       return false;
     }
 
-    if (formData.password.length < 6) {
+    if (trimmedPassword.length < 6) {
       toast.error('Mật khẩu phải có ít nhất 6 ký tự');
       return false;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (trimmedPassword !== trimmedConfirm) {
       toast.error('Mật khẩu không khớp');
       return false;
     }
@@ -111,14 +122,20 @@ const RegisterScreen = () => {
 
     try {
       const trimmedEmail = formData.email.trim();
+      const trimmedPhone = formData.phoneNumber.trim();
+      const trimmedSchool = formData.school.trim();
+      const trimmedMajor = formData.major.trim();
+      const trimmedPassword = formData.password.trim();
+      const trimmedFullName = formData.fullName.trim();
+
       const payload = {
         email: trimmedEmail,
-        password: formData.password,
-        fullName: formData.fullName.trim(),
-        phoneNumber: formData.phoneNumber.trim(),
+        password: trimmedPassword,
+        fullName: trimmedFullName,
+        phoneNumber: trimmedPhone,
         role: formData.role,
-        school: formData.school.trim(),
-        major: formData.major.trim(),
+        school: trimmedSchool,
+        major: trimmedMajor,
       };
 
       await registerMutation.mutateAsync(payload);

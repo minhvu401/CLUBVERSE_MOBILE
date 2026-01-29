@@ -1,15 +1,17 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,6 +52,23 @@ const ClubApplicationsScreen = ({ navigation }) => {
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const isFocused = useIsFocused();
 
+  const normalizeApplicationsResponse = useCallback((res) => {
+    const apps =
+      res?.applications ||
+      res?.data?.applications ||
+      res?.data?.data?.applications ||
+      res?.data?.data ||
+      res?.data ||
+      [];
+    const list = Array.isArray(apps) ? apps : [];
+    const total =
+      res?.total ??
+      res?.data?.total ??
+      res?.data?.data?.total ??
+      (Array.isArray(list) ? list.length : 0);
+    return { applications: list, total };
+  }, []);
+
   useEffect(() => {
     const loadClubId = async () => {
       try {
@@ -82,21 +101,22 @@ const ClubApplicationsScreen = ({ navigation }) => {
       try {
         setLoading(true);
         const response = await applicationService.getClubApplications(clubId);
+        const normalized = normalizeApplicationsResponse(response);
         if (isMounted) {
-          setApplications(response.applications || []);
+          setApplications(normalized.applications);
 
           // Calculate statistics
-          const total = response.total || 0;
-          const pending = response.applications?.filter(
+          const total = normalized.total || 0;
+          const pending = normalized.applications?.filter(
             (app) => app.status === 'PENDING'
           ).length || 0;
-          const approved = response.applications?.filter(
+          const approved = normalized.applications?.filter(
             (app) => app.status === 'APPROVED'
           ).length || 0;
-          const accepted = response.applications?.filter(
+          const accepted = normalized.applications?.filter(
             (app) => app.status === 'ACCEPTED'
           ).length || 0;
-          const rejected = response.applications?.filter(
+          const rejected = normalized.applications?.filter(
             (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
           ).length || 0;
 
@@ -121,7 +141,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
     return () => {
       isMounted = false;
     };
-  }, [isFocused, clubId]);
+  }, [isFocused, clubId, normalizeApplicationsResponse]);
 
   const handleApprove = (applicationId, userName) => {
     setSelectedApplicationId(applicationId);
@@ -214,19 +234,20 @@ const ClubApplicationsScreen = ({ navigation }) => {
 
       // Reload applications
       const response = await applicationService.getClubApplications(clubId);
-      setApplications(response.applications || []);
+      const normalized = normalizeApplicationsResponse(response);
+      setApplications(normalized.applications);
 
-      const total = response.total || 0;
-      const pending = response.applications?.filter(
+      const total = normalized.total || 0;
+      const pending = normalized.applications?.filter(
         (app) => app.status === 'PENDING'
       ).length || 0;
-      const approved = response.applications?.filter(
+      const approved = normalized.applications?.filter(
         (app) => app.status === 'APPROVED'
       ).length || 0;
-      const accepted = response.applications?.filter(
+      const accepted = normalized.applications?.filter(
         (app) => app.status === 'ACCEPTED'
       ).length || 0;
-      const rejected = response.applications?.filter(
+      const rejected = normalized.applications?.filter(
         (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
       ).length || 0;
 
@@ -258,16 +279,17 @@ const ClubApplicationsScreen = ({ navigation }) => {
 
       // Reload applications
       const response = await applicationService.getClubApplications(clubId);
-      setApplications(response.applications || []);
+      const normalized = normalizeApplicationsResponse(response);
+      setApplications(normalized.applications);
 
-      const total = response.total || 0;
-      const pending = response.applications?.filter(
+      const total = normalized.total || 0;
+      const pending = normalized.applications?.filter(
         (app) => app.status === 'PENDING'
       ).length || 0;
-      const approved = response.applications?.filter(
+      const approved = normalized.applications?.filter(
         (app) => app.status === 'APPROVED'
       ).length || 0;
-      const rejected = response.applications?.filter(
+      const rejected = normalized.applications?.filter(
         (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
       ).length || 0;
 
@@ -296,19 +318,20 @@ const ClubApplicationsScreen = ({ navigation }) => {
 
       // Reload applications
       const response = await applicationService.getClubApplications(clubId);
-      setApplications(response.applications || []);
+      const normalized = normalizeApplicationsResponse(response);
+      setApplications(normalized.applications);
 
-      const total = response.total || 0;
-      const pending = response.applications?.filter(
+      const total = normalized.total || 0;
+      const pending = normalized.applications?.filter(
         (app) => app.status === 'PENDING'
       ).length || 0;
-      const approved = response.applications?.filter(
+      const approved = normalized.applications?.filter(
         (app) => app.status === 'APPROVED'
       ).length || 0;
-      const accepted = response.applications?.filter(
+      const accepted = normalized.applications?.filter(
         (app) => app.status === 'ACCEPTED'
       ).length || 0;
-      const rejected = response.applications?.filter(
+      const rejected = normalized.applications?.filter(
         (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
       ).length || 0;
 
@@ -345,21 +368,21 @@ const ClubApplicationsScreen = ({ navigation }) => {
   const formatDate = (dateString) => {
     const date = parseDateTime(dateString);
     if (!date) return dateString || '';
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    return date.toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   };
 
   const formatDateTime = (dateString) => {
     const date = parseDateTime(dateString);
     if (!date) return dateString || '';
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return date.toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const handleOpenDatePicker = () => {
@@ -454,7 +477,8 @@ const ClubApplicationsScreen = ({ navigation }) => {
       end={{ x: 0, y: 1 }}
       style={styles.gradient}
     >
-      <SafeAreaView style={styles.safeArea}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <TouchableOpacity
@@ -472,19 +496,20 @@ const ClubApplicationsScreen = ({ navigation }) => {
                   try {
                     setLoading(true);
                     const response = await applicationService.getClubApplications(clubId);
-                    setApplications(response.applications || []);
+                    const normalized = normalizeApplicationsResponse(response);
+                    setApplications(normalized.applications);
 
-                    const total = response.total || 0;
-                    const pending = response.applications?.filter(
+                    const total = normalized.total || 0;
+                    const pending = normalized.applications?.filter(
                       (app) => app.status === 'PENDING'
                     ).length || 0;
-                    const approved = response.applications?.filter(
+                    const approved = normalized.applications?.filter(
                       (app) => app.status === 'APPROVED'
                     ).length || 0;
-                    const accepted = response.applications?.filter(
+                    const accepted = normalized.applications?.filter(
                       (app) => app.status === 'ACCEPTED'
                     ).length || 0;
-                    const rejected = response.applications?.filter(
+                    const rejected = normalized.applications?.filter(
                       (app) => app.status === 'REJECTED' || app.status === 'DECLINED'
                     ).length || 0;
 
@@ -809,8 +834,9 @@ const ClubApplicationsScreen = ({ navigation }) => {
           animationType="slide"
           onRequestClose={() => setRejectModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Từ chối đơn gia nhập</Text>
               <Text style={styles.modalSubtitle}>
                 Vui lòng nhập lý do từ chối đơn của “{selectedUserName}”
@@ -842,8 +868,9 @@ const ClubApplicationsScreen = ({ navigation }) => {
                   <Text style={styles.modalButtonConfirmText}>Xác nhận</Text>
                 </TouchableOpacity>
               </View>
+              </View>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
 
         {/* Approve Modal */}
@@ -853,8 +880,9 @@ const ClubApplicationsScreen = ({ navigation }) => {
           animationType="slide"
           onRequestClose={() => setApproveModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Phê duyệt đơn gia nhập</Text>
               <Text style={styles.modalSubtitle}>
                 Nhập thông tin phỏng vấn cho “{selectedUserName}”
@@ -923,7 +951,7 @@ const ClubApplicationsScreen = ({ navigation }) => {
                   <Text style={styles.modalButtonApproveText}>Xác nhận</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+              </View>
 
             {showDatePicker && (
               <DateTimePicker
@@ -941,7 +969,8 @@ const ClubApplicationsScreen = ({ navigation }) => {
                 onChange={handleTimePicked}
               />
             )}
-          </View>
+            </View>
+          </TouchableWithoutFeedback>
         </Modal>
 
         {/* Final Decision Modal */}
@@ -951,12 +980,13 @@ const ClubApplicationsScreen = ({ navigation }) => {
           animationType="slide"
           onRequestClose={() => setFinalDecisionModalVisible(false)}
         >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setFinalDecisionModalVisible(false)}
-          >
-            <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <TouchableOpacity
+              style={styles.modalOverlay}
+              activeOpacity={1}
+              onPress={() => setFinalDecisionModalVisible(false)}
+            >
+              <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
               <Text style={styles.modalTitle}>Xác nhận</Text>
               <Text style={styles.modalSubtitle}>
                 Xác nhận thành viên “{selectedFinalDecisionUserName}”
@@ -978,8 +1008,9 @@ const ClubApplicationsScreen = ({ navigation }) => {
                   <Text style={[styles.finalDecisionOptionText, { color: '#EF4444' }]}>Từ chối</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableWithoutFeedback>
         </Modal>
 
         <ConfirmationDialog
@@ -1002,7 +1033,8 @@ const ClubApplicationsScreen = ({ navigation }) => {
           onCancel={() => setLogoutDialogVisible(false)}
           type="danger"
         />
-      </SafeAreaView>
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
     </LinearGradient>
   );
 };

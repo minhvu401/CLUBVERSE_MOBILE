@@ -36,10 +36,12 @@ export const postService = {
   },
 
   // Get posts (public feed)
-  getPosts: async ({ clubId, sortBy = 'newest', limit = 20, skip = 0 } = {}) => {
+  getPosts: async ({ clubId, category, tag, sortBy = 'newest', limit = 20, skip = 0 } = {}) => {
     try {
       const params = {
         ...(clubId ? { clubId } : {}),
+        ...(category ? { category } : {}),
+        ...(tag ? { tag } : {}),
         sortBy,
         limit,
         skip,

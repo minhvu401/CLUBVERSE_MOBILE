@@ -22,6 +22,7 @@ const TABS = [
 
 const ForumScreen = () => {
   const [activeTab, setActiveTab] = useState('latest');
+  const [activeTag, setActiveTag] = useState(null);
 
   const sortBy = useMemo(() => {
     if (activeTab === 'popular') return 'popular';
@@ -40,7 +41,12 @@ const ForumScreen = () => {
     },
   });
 
-  const posts = data || [];
+  const posts = useMemo(() => data || [], [data]);
+
+  const filteredPosts = useMemo(() => {
+    if (!activeTag) return posts;
+    return posts.filter((p) => Array.isArray(p?.tags) && p.tags.includes(activeTag));
+  }, [posts, activeTag]);
 
   const queryClient = useQueryClient();
 
@@ -74,6 +80,17 @@ const ForumScreen = () => {
     if (!postId) return;
     likeMutation.mutate({ postId, isLiked: post.isLiked });
   };
+
+  const tags = useMemo(() => {
+    const set = new Set();
+    (posts || []).forEach((p) => {
+      const list = Array.isArray(p?.tags) ? p.tags : [];
+      list.forEach((t) => {
+        if (typeof t === 'string' && t.trim()) set.add(t.trim());
+      });
+    });
+    return Array.from(set);
+  }, [posts]);
 
   return (
     <LinearGradient
@@ -112,6 +129,33 @@ const ForumScreen = () => {
             })}
           </View>
 
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryRow}
+          >
+            <TouchableOpacity
+              activeOpacity={0.9}
+              style={[styles.categoryChip, !activeTag && styles.categoryChipActive]}
+              onPress={() => setActiveTag(null)}
+            >
+              <Text style={[styles.categoryText, !activeTag && styles.categoryTextActive]}>Tất cả</Text>
+            </TouchableOpacity>
+            {tags.map((t) => {
+              const isActive = t === activeTag;
+              return (
+                <TouchableOpacity
+                  key={t}
+                  activeOpacity={0.9}
+                  style={[styles.categoryChip, isActive && styles.categoryChipActive]}
+                  onPress={() => setActiveTag(t)}
+                >
+                  <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>{t}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
           {isLoading && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator color="#A855F7" />
@@ -119,7 +163,7 @@ const ForumScreen = () => {
             </View>
           )}
 
-          {!isLoading && posts.length === 0 && (
+          {!isLoading && filteredPosts.length === 0 && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>Chưa có bài viết</Text>
               <Text style={styles.emptyText}>Hãy quay lại sau hoặc thử tab khác.</Text>
@@ -129,7 +173,7 @@ const ForumScreen = () => {
             </View>
           )}
 
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <View key={post._id || post.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <View style={styles.avatarPlaceholder}>
@@ -172,10 +216,6 @@ const ForumScreen = () => {
                     {post.like ?? 0}
                   </Text>
                 </TouchableOpacity>
-                <View style={styles.footerItem}>
-                  <Text style={styles.footerIcon}>💬</Text>
-                  <Text style={styles.footerText}>{post.commented ?? 0}</Text>
-                </View>
               </View>
             </View>
           ))}
@@ -303,6 +343,31 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     marginBottom: 10,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  categoryChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+  },
+  categoryChipActive: {
+    backgroundColor: 'rgba(168,85,247,0.25)',
+    borderColor: 'rgba(168,85,247,0.6)',
+  },
+  categoryText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  categoryTextActive: {
+    color: '#FFFFFF',
   },
   badge: {
     paddingVertical: 6,

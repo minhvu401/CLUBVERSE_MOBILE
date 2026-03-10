@@ -20,7 +20,7 @@ const toDateKey = (date) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
-const StudentEventsScreen = () => {
+const StudentEventsScreen = ({ navigation, route }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(INITIAL_SELECTED_DATE);
   const [activeTab, setActiveTab] = useState('all');
@@ -63,10 +63,16 @@ const StudentEventsScreen = () => {
   }, [currentDate]);
 
   const filteredEvents = useMemo(() => {
+    const now = new Date();
     return events.filter((event) => {
+      // Filter out past events
+      const eventDate = new Date(event.date);
+      if (eventDate < now) return false;
+
       // Tab filters
       if (activeTab === 'mine' && !event.isRegistered) return false;
       if (activeTab === 'featured' && !event.isHighlight) return false;
+      
       // Date filter
       if (selectedDate) {
         const selectedKey = toDateKey(selectedDate);
@@ -77,7 +83,8 @@ const StudentEventsScreen = () => {
   }, [events, activeTab, selectedDate]);
 
   const mapApiEvent = (raw) => {
-    const dateObj = raw.time ? new Date(raw.time) : null;
+    const eventTime = raw.startTime || raw.time;
+    const dateObj = eventTime ? new Date(eventTime) : null;
     const timeRange = dateObj ? dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
     const slots = raw.availableSlots;
     const isFull = raw.isFull !== undefined ? raw.isFull : (slots !== undefined && slots !== null ? slots <= 0 : false);
@@ -86,7 +93,7 @@ const StudentEventsScreen = () => {
       id: eventId,
       title: raw.title,
       club: raw.clubId?.fullName || 'Câu lạc bộ',
-      date: raw.time,
+      date: eventTime,
       dateKey: toDateKey(dateObj),
       time: timeRange,
       location: raw.location,
@@ -318,14 +325,33 @@ const StudentEventsScreen = () => {
             </View>
           ) : (
             filteredEvents.map((event) => (
-              <LinearGradient
-                key={event.id}
-                colors={['#25144F', '#1A0E38']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.eventCard}
+              <TouchableOpacity
+                key={event.id || event._id}
+                activeOpacity={0.9}
+                onPress={() => {
+                  console.log('Navigating to detail with ID:', event.id || event._id);
+                  navigation.navigate('EventDetail', { eventId: event.id || event._id });
+                }}
+                style={styles.eventCardWrapper}
               >
-                <View style={styles.badgeRow}>
+                <LinearGradient
+                  colors={['#25144F', '#1A0E38']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.eventCardGradient}
+                >
+                  {event.image ? (
+                    <Image
+                      source={{ uri: event.image }}
+                      style={styles.eventImg}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={[styles.eventImg, { backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }]}>
+                      <Ionicons name="image-outline" size={32} color="rgba(255,255,255,0.2)" />
+                    </View>
+                  )}
+                  <View style={styles.badgeRow}>
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{event.tag}</Text>
                   </View>
@@ -387,7 +413,8 @@ const StudentEventsScreen = () => {
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
-              </LinearGradient>
+                </LinearGradient>
+              </TouchableOpacity>
             ))
           )}
         </ScrollView>
@@ -605,16 +632,27 @@ const styles = StyleSheet.create({
     color: '#E9D5FF',
     fontWeight: '700',
   },
-  eventCard: {
-    padding: 16,
+  eventCardWrapper: {
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.4,
     shadowRadius: 14,
     elevation: 12,
+    marginBottom: 4,
+  },
+  eventCardGradient: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  eventImg: {
+    width: '100%',
+    height: 140,
+    borderRadius: 12,
+    marginBottom: 12,
   },
   badgeRow: {
     flexDirection: 'row',

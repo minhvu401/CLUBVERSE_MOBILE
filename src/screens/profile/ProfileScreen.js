@@ -309,7 +309,13 @@ const ProfileScreen = ({ navigation, prefetchedUser }) => {
                 <Text style={styles.settingArrow}>›</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity activeOpacity={0.8} style={styles.settingItem}>
+              <TouchableOpacity 
+                activeOpacity={0.8} 
+                style={styles.settingItem}
+                onPress={() => navigation?.navigate('JoinedClubs', { 
+                  joinedClubs: user?.joinedClubs || user?.clubs || [] 
+                })}
+              >
                 <View style={styles.settingLeft}>
                   <Text style={styles.settingIcon}>🏷️</Text>
                   <Text style={styles.settingText}>CLB đã tham gia</Text>

@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { authService } from '../../services/authService';
 import ClubEventsScreen from '../club/ClubEventsScreen';
+import ClubProfileScreen from '../club/ClubProfileScreen';
 import EventParticipantsScreen from '../club/EventParticipantsScreen';
+import EventDetailScreen from '../events/EventDetailScreen';
 import StudentEventsScreen from '../events/StudentEventsScreen';
 
 const EventsStack = createNativeStackNavigator();
@@ -62,12 +64,23 @@ const EventsEntryScreen = () => {
       >
         <EventsStack.Screen name="ClubEvents" component={ClubEventsScreen} />
         <EventsStack.Screen name="EventParticipants" component={EventParticipantsScreen} />
+        <EventsStack.Screen name="EventDetail" component={EventDetailScreen} />
       </EventsStack.Navigator>
     );
   }
 
   // Student/other role: hiển thị màn Events theo thiết kế
-  return <StudentEventsScreen />;
+  return (
+    <EventsStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <EventsStack.Screen name="StudentEvents" component={StudentEventsScreen} />
+      <EventsStack.Screen name="EventDetail" component={EventDetailScreen} />
+      <EventsStack.Screen name="ClubProfile" component={ClubProfileScreen} />
+    </EventsStack.Navigator>
+  );
 };
 
 export default EventsEntryScreen;

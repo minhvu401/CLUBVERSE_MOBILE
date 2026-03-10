@@ -13,10 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
+import ReasonDialog from '../../components/common/ReasonDialog';
 import { applicationService } from '../../services/applicationService';
-import { authService } from '../../services/authService';
 import { clubService } from '../../services/clubService';
+import { eventService } from '../../services/eventService';
 import { notificationService } from '../../services/notificationService';
+import { userService } from '../../services/userService';
 import { toast } from '../../utils/toast';
 const { width } = Dimensions.get('window');
 
@@ -41,34 +43,22 @@ const mockRecommendedClubs = [
   },
 ];
 
-const mockEvents = [
-  {
-    id: '1',
-    day: 'T10',
-    date: '28',
-    title: 'Workshop: AI & Machine Learning',
-    club: 'Tech Innovation Club',
-    time: '14:00',
-    location: 'Phòng A101',
-  },
-  {
-    id: '2',
-    day: 'T10',
-    date: '28',
-    title: 'Buổi giao lưu tiếng Anh',
-    club: 'English Speaking Club',
-    time: '16:00',
-    location: 'Sân trường',
-  },
-];
+// Removed mockEvents
 
 const mockMyClubsColors = ['#8E5AF7', '#FF4F8B', '#45E07E', '#FF8A3C'];
 
 const HomeScreen = () => {
   const [userName, setUserName] = useState('');
   const [clubs, setClubs] = useState([]);
+  const [appliedClubIds, setAppliedClubIds] = useState([]);
+  const [joinedClubIds, setJoinedClubIds] = useState([]);
+  const [joinedClubs, setJoinedClubs] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loadingClubs, setLoadingClubs] = useState(true);
+  const [loadingEvents, setLoadingEvents] = useState(true);
   const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
+  const [reasonDialogVisible, setReasonDialogVisible] = useState(false);
+  const [joinReason, setJoinReason] = useState('');
   const [selectedClub, setSelectedClub] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigation = useNavigation();
@@ -99,19 +89,51 @@ const HomeScreen = () => {
 
     const loadData = async () => {
       try {
-        const user = await authService.getCurrentUser();
-        if (isMounted && user && user.fullName) {
-          setUserName(user.fullName);
+        const profileResponse = await userService.getUserProfile();
+        const profile = profileResponse.user || profileResponse.data?.user || profileResponse.data || profileResponse;
+        
+        if (isMounted && profile) {
+          setUserName(profile.fullName || '');
+          const jClubs = profile.clubsJoined || profile.clubJoined || profile.joinedClubs || profile.clubs || [];
+          setJoinedClubs(jClubs);
+          setJoinedClubIds(jClubs.map(c => c.clubId?._id || c.clubId || c._id || c.id));
         }
 
         const clubsResponse = await clubService.getAllClubs();
+        const applicationsResponse = await applicationService.getMyApplications();
+        
         if (isMounted) {
-          setClubs(clubsResponse.clubs || []);
+          const allClubs = clubsResponse.clubs || [];
+          setClubs(allClubs);
+          
+          const apps = applicationsResponse.applications || 
+                       applicationsResponse.data?.applications || 
+                       applicationsResponse.data || [];
+          
+          const appliedIds = apps.map(app => app.clubId?._id || app.clubId);
+          setAppliedClubIds(appliedIds);
+        }
+
+        const eventsResponse = await eventService.getEvents({ limit: 10 });
+        if (isMounted) {
+          const rawEvents = eventsResponse.events || eventsResponse.data?.events || eventsResponse.data || [];
+          
+          // Filter out past events
+          const now = new Date();
+          const upcomingEvents = rawEvents.filter(event => {
+            const eventDate = new Date(event.startTime);
+            return eventDate > now;
+          });
+          
+          setEvents(upcomingEvents);
         }
       } catch (_error) {
-        // TODO: you could show an Alert here if needed
+        // console.error('Error loading data:', _error);
       } finally {
-        if (isMounted) setLoadingClubs(false);
+        if (isMounted) {
+          setLoadingClubs(false);
+          setLoadingEvents(false);
+        }
       }
     };
 
@@ -124,7 +146,18 @@ const HomeScreen = () => {
 
   const handleApplyToClub = (club) => {
     setSelectedClub(club);
+    setReasonDialogVisible(true);
+  };
+
+  const handleReasonConfirm = (reason) => {
+    setJoinReason(reason);
+    setReasonDialogVisible(false);
     setConfirmDialogVisible(true);
+  };
+
+  const handleReasonCancel = () => {
+    setReasonDialogVisible(false);
+    setSelectedClub(null);
   };
 
   const handleConfirmJoin = async () => {
@@ -134,19 +167,31 @@ const HomeScreen = () => {
     try {
       await applicationService.createApplication(
         selectedClub._id,
-        'Em rất mong muốn được tham gia và đóng góp cho câu lạc bộ.'
+        joinReason || 'Em rất mong muốn được tham gia và đóng góp cho câu lạc bộ.'
       );
       toast.success('Đã gửi đơn gia nhập CLB.');
+      // Refresh applied club IDs to hide the club immediately
+      setAppliedClubIds(prev => [...prev, selectedClub._id]);
     } catch (error) {
       toast.error(error.message || 'Không thể gửi đơn gia nhập.');
     } finally {
       setSelectedClub(null);
+      setJoinReason('');
     }
   };
 
   const handleCancelJoin = () => {
     setConfirmDialogVisible(false);
     setSelectedClub(null);
+  };
+
+  const formatEventDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return {
+      day: `T${d.getMonth() + 1}`,
+      date: d.getDate().toString().padStart(2, '0'),
+      time: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+    };
   };
 
   return (
@@ -203,23 +248,42 @@ const HomeScreen = () => {
                 snapToInterval={RECOMMEND_CARD_WIDTH + 16}
                 contentContainerStyle={styles.recommendScrollContent}
               >
-                {clubs.map((club) => (
-                  <TouchableOpacity
-                    key={club._id}
-                    activeOpacity={0.9}
-                    onPress={() => handleApplyToClub(club)}
-                  >
-                    <LinearGradient
-                      colors={["#6C4DEB", "#F05BC8"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.recommendCard}
+                {clubs.map((club, index) => {
+                  const isMember = club._id ? joinedClubIds.includes(club._id) : false;
+                  const isApplied = club._id ? appliedClubIds.includes(club._id) && !isMember : false;
+                  const canView = isMember || isApplied;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={club._id || `club-${index}`}
+                      activeOpacity={0.9}
+                      onPress={() => {
+                        if (canView) {
+                          navigation.navigate('Hồ sơ', {
+                            screen: 'ClubProfile',
+                            params: { 
+                              clubId: club._id, 
+                              userStatus: isMember ? 'ACCEPTED' : (isApplied ? 'APPLIED' : null)
+                            }
+                          });
+                        } else {
+                          handleApplyToClub(club);
+                        }
+                      }}
                     >
-                      <View style={styles.recommendTopRow}>
-                        <View style={styles.matchBadge}>
-                          <Text style={styles.matchBadgeText}>CLB</Text>
+                      <LinearGradient
+                        colors={isMember ? ["#10B981", "#059669"] : isApplied ? ["#4B5563", "#1F2937"] : ["#6C4DEB", "#F05BC8"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.recommendCard}
+                      >
+                        <View style={styles.recommendTopRow}>
+                          <View style={styles.matchBadge}>
+                            <Text style={styles.matchBadgeText}>
+                              {isMember ? 'THÀNH VIÊN' : isApplied ? 'ĐÃ GỬI ĐƠN' : 'CLB'}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
 
                       <Text numberOfLines={2} style={styles.recommendName}>
                         {club.fullName || 'Tên CLB'}
@@ -241,85 +305,129 @@ const HomeScreen = () => {
                           {club.school ? club.school : ''}
                         </Text>
                       </View>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ))}
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             )}
           </View>
 
-          <View style={styles.sectionWrapper}>
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Sự kiện sắp diễn ra</Text>
-              </View>
-              <TouchableOpacity activeOpacity={0.8}>
-                <Text style={styles.sectionActionText}>Xem tất cả</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.eventListWrapper}>
-              {mockEvents.map((event) => (
-                <View key={event.id} style={styles.eventCard}>
-                  <LinearGradient
-                    colors={["#6C4DEB", "#F05BC8"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
-                    style={styles.eventDateBadge}
-                  >
-                    <Text style={styles.eventMonthText}>{event.day}</Text>
-                    <Text style={styles.eventDateText}>{event.date}</Text>
-                  </LinearGradient>
-
-                  <View style={styles.eventContent}>
-                    <Text numberOfLines={2} style={styles.eventTitle}>
-                      {event.title}
-                    </Text>
-                    <Text numberOfLines={1} style={styles.eventClub}>
-                      {event.club}
-                    </Text>
-
-                    <View style={styles.eventMetaRow}>
-                      <View style={styles.eventMetaItem}>
-                        <Text style={styles.eventMetaDot}>●</Text>
-                        <Text style={styles.eventMetaText}>{event.time}</Text>
-                      </View>
-                      <View style={styles.eventMetaItem}>
-                        <Text style={styles.eventMetaDot}>📍</Text>
-                        <Text style={styles.eventMetaText}>{event.location}</Text>
-                      </View>
-                    </View>
-                  </View>
+          {!loadingEvents && events.length > 0 && (
+            <View style={styles.sectionWrapper}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionTitleRow}>
+                  <Text style={styles.sectionTitle}>Sự kiện sắp diễn ra</Text>
                 </View>
-              ))}
-            </View>
-          </View>
+                <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('Sự kiện')}>
+                  <Text style={styles.sectionActionText}>Xem tất cả</Text>
+                </TouchableOpacity>
+              </View>
 
-          <View style={styles.sectionWrapper}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>CLB của tôi</Text>
-              <TouchableOpacity activeOpacity={0.8}>
-                <Text style={styles.sectionActionText}>Quản lý</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.eventListWrapper}>
+                {events.map((event, index) => {
+                  const { day, date, time } = formatEventDate(event.startTime);
+                  return (
+                    <TouchableOpacity 
+                      key={event._id || event.id || `event-${index}`} 
+                      style={styles.eventCard}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        console.log('Navigating to EventDetail from Home:', event._id || event.id);
+                        navigation.navigate('Sự kiện', { 
+                          screen: 'EventDetail', 
+                          params: { eventId: event._id || event.id } 
+                        });
+                      }}
+                    >
+                      <LinearGradient
+                        colors={["#6C4DEB", "#F05BC8"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={styles.eventDateBadge}
+                      >
+                        <Text style={styles.eventMonthText}>{day}</Text>
+                        <Text style={styles.eventDateText}>{date}</Text>
+                      </LinearGradient>
 
-            <View style={styles.myClubsRow}>
-              {mockMyClubsColors.map((color, index) => (
-                <View
-                  key={index.toString()}
-                  style={[styles.clubCircle, { backgroundColor: color }]}
-                />
-              ))}
+                      <View style={styles.eventContent}>
+                        <Text numberOfLines={2} style={styles.eventTitle}>
+                          {event.title}
+                        </Text>
+                        <Text numberOfLines={1} style={styles.eventClub}>
+                          {event.clubId?.fullName || 'Câu lạc bộ'}
+                        </Text>
+
+                        <View style={styles.eventMetaRow}>
+                          <View style={styles.eventMetaItem}>
+                            <Text style={styles.eventMetaDot}>●</Text>
+                            <Text style={styles.eventMetaText}>{time}</Text>
+                          </View>
+                          <View style={styles.eventMetaItem}>
+                            <Text style={styles.eventMetaDot}>📍</Text>
+                            <Text numberOfLines={1} style={styles.eventMetaText}>{event.location}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
-          </View>
+          )}
+
+          {joinedClubs.length > 0 && (
+            <View style={styles.sectionWrapper}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>CLB của tôi</Text>
+                <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('Hồ sơ')}>
+                  <Text style={styles.sectionActionText}>Quản lý</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.myClubsRow}>
+                {joinedClubs.map((club, index) => (
+                  <TouchableOpacity 
+                    key={club._id || (club.clubId?._id || club.clubId) || `joined-${index}`}
+                    onPress={() => navigation.navigate('Hồ sơ', {
+                      screen: 'ClubProfile',
+                      params: { 
+                        clubId: club.clubId?._id || club.clubId || club._id || club.id, 
+                        userStatus: 'ACCEPTED' 
+                      }
+                    })}
+                  >
+                    <View style={styles.clubCircle}>
+                      {club.avatar ? (
+                        <Image source={{ uri: club.avatar }} style={styles.clubCircleImage} />
+                      ) : (
+                        <View style={[styles.clubCirclePlaceholder, { backgroundColor: '#6C4DEB' }]}>
+                          <Text style={styles.clubCircleText}>
+                            {club.fullName?.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
         </ScrollView>
+
+        <ReasonDialog
+          visible={reasonDialogVisible}
+          title={`Tham gia ${selectedClub?.fullName || 'CLB'}`}
+          onConfirm={handleReasonConfirm}
+          onCancel={handleReasonCancel}
+        />
 
         <ConfirmationDialog
           visible={confirmDialogVisible}
-          title="Tham gia CLB"
-          message={`Bạn có chắc chắn muốn gửi đơn gia nhập "${selectedClub?.fullName || ''}"?`}
+          title="Xác nhận gửi đơn"
+          message={`Bạn có chắc chắn muốn gửi đơn gia nhập "${selectedClub?.fullName || ''}" với lý do đã nhập?`}
           confirmText="Gửi đơn"
-          cancelText="Hủy"
+          cancelText="Quay lại"
           onConfirm={handleConfirmJoin}
           onCancel={handleCancelJoin}
           type="default"
@@ -564,9 +672,28 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   clubCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 2,
+    borderColor: '#10B981',
+  },
+  clubCircleImage: {
+    width: '100%',
+    height: '100%',
+  },
+  clubCirclePlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clubCircleText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 18,
   },
 });
 

@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -10,8 +11,79 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../services/api';
+import { eventService } from '../../services/eventService';
 
-const ClubProfileScreen = ({ navigation, club, onLogout, isLoggingOut }) => {
+const ClubProfileScreen = ({ navigation, route, club: propClub, onLogout, isLoggingOut }) => {
+  const [club, setClub] = useState(propClub);
+  const [loading, setLoading] = useState(!propClub);
+  const [clubEvents, setClubEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  useEffect(() => {
+    const loadUser = async () => {
+      const user = await authService.getCurrentUser();
+      setCurrentUser(user);
+    };
+    loadUser();
+  }, []);
+  
+  // Get clubId and status from route params if available
+  const routeClubId = route?.params?.clubId;
+  const userStatus = route?.params?.userStatus;
+  const viewAsMember = !!userStatus || route?.params?.viewAsMember;
+
+  useEffect(() => {
+    if (propClub) {
+      setClub(propClub);
+      setLoading(false);
+    } else if (routeClubId) {
+      const fetchClubDetails = async () => {
+        try {
+          setLoading(true);
+          // Using /users/{id} as per the provided API documentation for profile by ID
+          const response = await api.get(`/users/${routeClubId}`);
+          setClub(response.user || response.data?.user || response.data || response);
+        } catch (error) {
+          console.error('Error fetching club details:', error);
+          Alert.alert('Lỗi', 'Không thể tải thông tin câu lạc bộ.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchClubDetails();
+    }
+  }, [propClub, routeClubId]);
+
+  useEffect(() => {
+    const id = club?._id || routeClubId;
+    if (id && currentUser?.role !== 'club') {
+      const fetchEvents = async () => {
+        try {
+          setLoadingEvents(true);
+          const response = await eventService.getClubEvents(id);
+          const events = response.events || response.data?.events || response.data || [];
+          
+          // Filter out past events
+          const now = new Date();
+          const upcomingEvents = events.filter(event => {
+            const eventTime = event.startTime || event.time;
+            return eventTime ? new Date(eventTime) > now : true;
+          });
+          
+          setClubEvents(upcomingEvents);
+        } catch (error) {
+          console.error('Error fetching club events:', error);
+        } finally {
+          setLoadingEvents(false);
+        }
+      };
+      fetchEvents();
+    }
+  }, [club?._id, routeClubId, currentUser?.role]);
+
   const posts = useMemo(() => club?.posts || [], [club?.posts]);
   const socialLinks = club?.socialLink || [];
   const isVerified = club?.isVerified;
@@ -67,10 +139,23 @@ const ClubProfileScreen = ({ navigation, club, onLogout, isLoggingOut }) => {
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {(viewAsMember || routeClubId) && (
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={styles.backButton}
+              >
+                <Text style={styles.backButtonText}>← Quay lại</Text>
+              </TouchableOpacity>
+            )}
           <LinearGradient
             colors={['#7C3AED', '#EC4899']}
             start={{ x: 0, y: 0 }}
@@ -113,13 +198,21 @@ const ClubProfileScreen = ({ navigation, club, onLogout, isLoggingOut }) => {
             </View>
 
             <View style={styles.ctaRow}>
-              <TouchableOpacity
-                activeOpacity={0.9}
-                style={styles.secondaryButton}
-                onPress={() => navigation?.navigate('ClubApplications')}
-              >
-                <Text style={styles.secondaryButtonText}>Đơn gia nhập</Text>
-              </TouchableOpacity>
+              {!viewAsMember ? (
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  style={styles.secondaryButton}
+                  onPress={() => navigation?.navigate('ClubApplications')}
+                >
+                  <Text style={styles.secondaryButtonText}>Đơn gia nhập</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={[styles.memberBadge, userStatus === 'ACCEPTED' && styles.acceptedBadge]}>
+                  <Text style={styles.memberBadgeText}>
+                    {userStatus === 'ACCEPTED' ? 'Thành viên ✨' : 'Đã gửi đơn ✨'}
+                  </Text>
+                </View>
+              )}
             </View>
           </LinearGradient>
 
@@ -157,7 +250,9 @@ const ClubProfileScreen = ({ navigation, club, onLogout, isLoggingOut }) => {
           </View>
 
           <View style={styles.sectionWrapper}>
-            <Text style={styles.sectionTitle}>Liên hệ & thông tin</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Liên hệ & thông tin</Text>
+            </View>
             <View style={styles.card}>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Email</Text>
@@ -179,6 +274,44 @@ const ClubProfileScreen = ({ navigation, club, onLogout, isLoggingOut }) => {
               </View>
             </View>
           </View>
+
+          {currentUser?.role !== 'club' && (
+            <View style={styles.sectionWrapper}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Sự kiện của CLB</Text>
+                <Text style={styles.sectionActionText}>{clubEvents.length} sự kiện</Text>
+              </View>
+              <View style={styles.card}>
+                {loadingEvents ? (
+                  <ActivityIndicator color="#A855F7" />
+                ) : clubEvents.length === 0 ? (
+                  <Text style={styles.bodyText}>CLB hiện chưa có sự kiện nào.</Text>
+                ) : (
+                  clubEvents.map((event) => (
+                    <TouchableOpacity
+                      key={event._id}
+                      style={styles.clubEventItem}
+                      onPress={() => navigation.navigate('EventDetail', { eventId: event._id })}
+                    >
+                      <View style={styles.clubEventDate}>
+                        <Text style={styles.clubEventDay}>
+                          {new Date(event.startTime || event.time).getDate()}
+                        </Text>
+                        <Text style={styles.clubEventMonth}>
+                          T{new Date(event.startTime || event.time).getMonth() + 1}
+                        </Text>
+                      </View>
+                      <View style={styles.clubEventDetails}>
+                        <Text style={styles.clubEventName} numberOfLines={1}>{event.title}</Text>
+                        <Text style={styles.clubEventLoc} numberOfLines={1}>📍 {event.location}</Text>
+                      </View>
+                      <Text style={styles.chevron}>›</Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
+            </View>
+          )}
 
           <View style={styles.sectionWrapper}>
             <View style={styles.sectionHeaderRow}>
@@ -221,19 +354,22 @@ const ClubProfileScreen = ({ navigation, club, onLogout, isLoggingOut }) => {
             </View>
           </View>
 
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={[styles.logoutButton, isLoggingOut && styles.disabledButton]}
-            onPress={onLogout}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.logoutText}>Đăng xuất</Text>
-            )}
-          </TouchableOpacity>
+          {!viewAsMember && (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              style={[styles.logoutButton, isLoggingOut && styles.disabledButton]}
+              onPress={onLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.logoutText}>Đăng xuất</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </ScrollView>
+        )}
       </SafeAreaView>
     </LinearGradient>
   );
@@ -249,6 +385,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+    paddingTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButton: {
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  backButtonText: {
+    color: '#A855F7',
+    fontSize: 16,
+    fontWeight: '600',
   },
   headerCard: {
     borderRadius: 28,
@@ -345,6 +496,23 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  memberBadge: {
+    backgroundColor: 'rgba(168, 85, 247, 0.25)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(168, 85, 247, 0.5)',
+  },
+  memberBadgeText: {
+    color: '#E0E7FF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  acceptedBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    borderColor: 'rgba(16, 185, 129, 0.5)',
   },
   disabledButton: {
     opacity: 0.6,
@@ -475,6 +643,46 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  clubEventItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  clubEventDate: {
+    width: 45,
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  clubEventDay: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  clubEventMonth: {
+    color: '#A855F7',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  clubEventDetails: {
+    flex: 1,
+    gap: 2,
+  },
+  clubEventName: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  clubEventLoc: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11,
+  },
+  chevron: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 24,
+    marginLeft: 8,
   },
 });
 

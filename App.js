@@ -10,6 +10,7 @@ import MainNavigator from './src/navigation/MainNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import OTPVerificationScreen from './src/screens/auth/OTPVerificationScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import NotificationScreen from './src/screens/home/NotificationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +37,7 @@ export default function App() {
           <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
           <Stack.Screen name="Main" component={MainNavigator} />
           <Stack.Screen name="ClubMain" component={ClubNavigator} />
+          <Stack.Screen name="Notifications" component={NotificationScreen} />
         </Stack.Navigator>
         <StatusBar style="light" />
       </NavigationContainer>

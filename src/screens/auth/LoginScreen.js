@@ -76,11 +76,6 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // TODO: Tích hợp Google Login
-    toast.info('Tính năng đăng nhập Google đang được phát triển');
-  };
-
   const handleForgotPassword = () => {
     if (navigation) {
       navigation.navigate('ForgotPassword');
@@ -132,26 +127,6 @@ const LoginScreen = ({ navigation }) => {
                     <Text style={styles.welcomeSubtitle}>
                       Đăng nhập để khám phá các câu lạc bộ
                     </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={styles.googleButtonWrapper}
-                    onPress={handleGoogleLogin}
-                    disabled={loginMutation.isPending}
-                  >
-                    <View style={styles.googleButtonInner}>
-                      <View style={styles.googleIconPlaceholder}>
-                        <Text style={styles.googleIconLetter}>G</Text>
-                      </View>
-                      <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
-                    </View>
-                  </TouchableOpacity>
-
-                  <View style={styles.dividerWrapper}>
-                    <View style={styles.divider} />
-                    <Text style={styles.dividerText}>hoặc</Text>
-                    <View style={styles.divider} />
                   </View>
 
                   <View style={styles.fieldGroup}>
@@ -299,52 +274,6 @@ const styles = StyleSheet.create({
   welcomeSubtitle: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.65)',
-  },
-  googleButtonWrapper: {
-    marginBottom: 20,
-  },
-  googleButtonInner: {
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleIconPlaceholder: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  googleIconLetter: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#4285F4',
-  },
-  googleButtonText: {
-    fontSize: 14,
-    color: '#111827',
-    fontWeight: '500',
-  },
-  dividerWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(148, 163, 184, 0.5)',
-  },
-  dividerText: {
-    marginHorizontal: 10,
-    fontSize: 12,
-    color: 'rgba(148, 163, 184, 0.9)',
   },
   fieldGroup: {
     marginBottom: 14,

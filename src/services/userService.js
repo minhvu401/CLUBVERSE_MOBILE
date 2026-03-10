@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import api from './api';
 
 export const userService = {
@@ -39,15 +40,16 @@ export const userService = {
 
     const formData = new FormData();
     formData.append('file', {
-      uri: fileUri,
+      uri: Platform.OS === 'android' ? fileUri : fileUri.replace('file://', ''),
       name: pickedName,
-      type: mimeType,
+      type: mimeType || 'image/jpeg',
     });
 
     try {
       const response = await api.post('/users/avatar', formData, {
-        // Let axios set correct multipart boundary
-        headers: { 'Content-Type': undefined },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       return response;
     } catch (error) {

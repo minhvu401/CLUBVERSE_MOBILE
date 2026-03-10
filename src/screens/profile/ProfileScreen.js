@@ -102,8 +102,12 @@ const ProfileScreen = ({ navigation, prefetchedUser }) => {
       if (!uri) return;
 
       setIsAvatarLoading(true);
-      await userService.uploadAvatar(uri, mimeType || undefined, fileName);
-      await refreshProfile();
+      const res = await userService.uploadAvatar(uri, mimeType || undefined, fileName);
+      if (res && res.user) {
+         setUser(res.user);
+      } else {
+         await refreshProfile();
+      }
       toast.success('Cập nhật ảnh đại diện thành công');
     } catch (error) {
       toast.error(error.message || 'Không thể cập nhật ảnh đại diện');
@@ -370,6 +374,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
+  },
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   avatarInitial: {
     fontSize: 26,

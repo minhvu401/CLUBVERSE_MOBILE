@@ -1,6 +1,8 @@
 /* eslint-disable no-unused-vars */
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Dimensions,
   ScrollView,
@@ -14,6 +16,7 @@ import ConfirmationDialog from '../../components/common/ConfirmationDialog';
 import { applicationService } from '../../services/applicationService';
 import { authService } from '../../services/authService';
 import { clubService } from '../../services/clubService';
+import { notificationService } from '../../services/notificationService';
 import { toast } from '../../utils/toast';
 const { width } = Dimensions.get('window');
 
@@ -67,6 +70,29 @@ const HomeScreen = () => {
   const [loadingClubs, setLoadingClubs] = useState(true);
   const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const navigation = useNavigation();
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      const getUnread = async () => {
+        try {
+          const res = await notificationService.getUnreadCount();
+          if (isActive) {
+            setUnreadCount(res.count || res.unreadCount || res || 0);
+          }
+        } catch (error) {
+          // ignore
+        }
+      };
+      getUnread();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -103,7 +129,7 @@ const HomeScreen = () => {
 
   const handleConfirmJoin = async () => {
     if (!selectedClub) return;
-    
+
     setConfirmDialogVisible(false);
     try {
       await applicationService.createApplication(
@@ -135,11 +161,21 @@ const HomeScreen = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.headerWrapper}>
-            <Text style={styles.welcomeTitle}>Xin chào, {userName}! 👋</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Chào mừng đến với Clubverse
-            </Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerWrapper}>
+              <Text style={styles.welcomeTitle}>Xin chào, {userName}! 👋</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Chào mừng đến với Clubverse
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.bellIconContainer}>
+              <Ionicons name="notifications-outline" size={28} color="#FFFFFF" />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
 
           <View style={styles.sectionWrapper}>
@@ -304,9 +340,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
-  headerWrapper: {
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 24,
     marginTop: 8,
+  },
+  headerWrapper: {
+    flex: 1,
   },
   welcomeTitle: {
     fontSize: 22,
@@ -317,6 +359,28 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
     color: 'rgba(255,255,255,0.7)',
+  },
+  bellIconContainer: {
+    padding: 8,
+    position: 'relative',
+    marginLeft: 16,
+  },
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   sectionWrapper: {
     marginBottom: 24,

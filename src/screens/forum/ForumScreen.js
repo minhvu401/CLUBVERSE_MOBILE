@@ -1,14 +1,15 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../services/postService';
@@ -22,7 +23,6 @@ const TABS = [
 
 const ForumScreen = () => {
   const [activeTab, setActiveTab] = useState('latest');
-  const [activeTag, setActiveTag] = useState(null);
 
   const sortBy = useMemo(() => {
     if (activeTab === 'popular') return 'popular';
@@ -42,11 +42,6 @@ const ForumScreen = () => {
   });
 
   const posts = useMemo(() => data || [], [data]);
-
-  const filteredPosts = useMemo(() => {
-    if (!activeTag) return posts;
-    return posts.filter((p) => Array.isArray(p?.tags) && p.tags.includes(activeTag));
-  }, [posts, activeTag]);
 
   const queryClient = useQueryClient();
 
@@ -80,17 +75,6 @@ const ForumScreen = () => {
     if (!postId) return;
     likeMutation.mutate({ postId, isLiked: post.isLiked });
   };
-
-  const tags = useMemo(() => {
-    const set = new Set();
-    (posts || []).forEach((p) => {
-      const list = Array.isArray(p?.tags) ? p.tags : [];
-      list.forEach((t) => {
-        if (typeof t === 'string' && t.trim()) set.add(t.trim());
-      });
-    });
-    return Array.from(set);
-  }, [posts]);
 
   return (
     <LinearGradient
@@ -129,32 +113,7 @@ const ForumScreen = () => {
             })}
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryRow}
-          >
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={[styles.categoryChip, !activeTag && styles.categoryChipActive]}
-              onPress={() => setActiveTag(null)}
-            >
-              <Text style={[styles.categoryText, !activeTag && styles.categoryTextActive]}>Tất cả</Text>
-            </TouchableOpacity>
-            {tags.map((t) => {
-              const isActive = t === activeTag;
-              return (
-                <TouchableOpacity
-                  key={t}
-                  activeOpacity={0.9}
-                  style={[styles.categoryChip, isActive && styles.categoryChipActive]}
-                  onPress={() => setActiveTag(t)}
-                >
-                  <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>{t}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          
 
           {isLoading && (
             <View style={styles.loadingContainer}>
@@ -163,7 +122,7 @@ const ForumScreen = () => {
             </View>
           )}
 
-          {!isLoading && filteredPosts.length === 0 && (
+          {!isLoading && posts.length === 0 && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>Chưa có bài viết</Text>
               <Text style={styles.emptyText}>Hãy quay lại sau hoặc thử tab khác.</Text>
@@ -173,7 +132,7 @@ const ForumScreen = () => {
             </View>
           )}
 
-          {filteredPosts.map((post) => (
+          {posts.map((post) => (
             <View key={post._id || post.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <View style={styles.avatarPlaceholder}>
@@ -211,7 +170,11 @@ const ForumScreen = () => {
                   onPress={() => toggleLike(post)}
                   disabled={likeMutation.isPending}
                 >
-                  <Text style={[styles.footerIcon, post.isLiked && styles.footerIconActive]}>👍</Text>
+                  <Ionicons 
+                    name={post.isLiked ? "heart" : "heart-outline"} 
+                    size={18} 
+                    color={post.isLiked ? "#EF4444" : "rgba(255,255,255,0.85)"} 
+                  />
                   <Text style={[styles.footerText, post.isLiked && styles.footerTextActive]}>
                     {post.like ?? 0}
                   </Text>
@@ -344,31 +307,6 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 10,
   },
-  categoryRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
-  },
-  categoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-  },
-  categoryChipActive: {
-    backgroundColor: 'rgba(168,85,247,0.25)',
-    borderColor: 'rgba(168,85,247,0.6)',
-  },
-  categoryText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  categoryTextActive: {
-    color: '#FFFFFF',
-  },
   badge: {
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -412,7 +350,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   footerTextActive: {
-    color: '#6EE7B7',
+    color: '#EF4444',
   },
 });
 

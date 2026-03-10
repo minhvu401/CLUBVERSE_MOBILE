@@ -41,7 +41,8 @@ export const eventService = {
   // Get events by clubId
   getClubEvents: async (clubId) => {
     try {
-      const response = await api.get(`/events?clubId=${clubId}`);
+      // Updated to match your API: /events/club/:clubId
+      const response = await api.get(`/events/club/${clubId}`);
       return response;
     } catch (error) {
       throw error;
@@ -51,6 +52,7 @@ export const eventService = {
   // Get event detail by eventId
   getEventDetail: async (eventId) => {
     try {
+      // Your API: /events/:eventId
       const response = await api.get(`/events/${eventId}`);
       return response;
     } catch (error) {

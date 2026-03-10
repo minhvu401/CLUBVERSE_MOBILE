@@ -2,16 +2,16 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfirmationDialog from '../../components/common/ConfirmationDialog';
@@ -522,7 +522,7 @@ const ClubEventsScreen = ({ navigation }) => {
                     </Text>
                     <View style={styles.participantsBadge}>
                       <Text style={styles.participantsText}>
-                        {event.participants?.length || 0}/{event.maxParticipants || 0}
+                        {(event.joinedUsers?.length || event.participants?.length || 0)}/{event.maxParticipants || 0}
                       </Text>
                     </View>
                   </View>
@@ -742,9 +742,9 @@ const ClubEventsScreen = ({ navigation }) => {
                       <Text style={styles.detailMetaValue}>{selectedEvent.location}</Text>
                     </View>
                     <View style={styles.detailMetaItem}>
-                      <Text style={styles.detailMetaLabel}>👥 Số lượng:</Text>
+                      <Text style={styles.detailMetaLabel}>👥 Số lượng đăng ký:</Text>
                       <Text style={styles.detailMetaValue}>
-                        {selectedEvent.participants?.length || 0}/{selectedEvent.maxParticipants || 0}
+                        {(selectedEvent.joinedUsers?.length || selectedEvent.participants?.length || 0)}/{selectedEvent.maxParticipants || 0}
                       </Text>
                     </View>
                   </View>

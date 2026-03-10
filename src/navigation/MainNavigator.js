@@ -1,24 +1,23 @@
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import ClubApplicationsScreen from '../screens/club/ClubApplicationsScreen';
+import ClubProfileScreen from '../screens/club/ClubProfileScreen';
+import EventParticipantsScreen from '../screens/club/EventParticipantsScreen';
+import EventDetailScreen from '../screens/events/EventDetailScreen';
 import ForumScreen from '../screens/forum/ForumScreen';
 import EventsEntryScreen from '../screens/home/EventsEntryScreen';
 import HomeEntryScreen from '../screens/home/HomeEntryScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import JoinedClubsScreen from '../screens/profile/JoinedClubsScreen';
 import MyApplicationsScreen from '../screens/profile/MyApplicationsScreen';
 import ProfileEntryScreen from '../screens/profile/ProfileEntryScreen';
 
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
 
-const ExploreScreen = () => (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>Khám phá</Text>
-  </View>
-);
 
 const ProfileStackNavigator = () => (
   <ProfileStack.Navigator
@@ -27,9 +26,13 @@ const ProfileStackNavigator = () => (
     }}
   >
     <ProfileStack.Screen name="ProfileMain" component={ProfileEntryScreen} />
+    <ProfileStack.Screen name="ClubProfile" component={ClubProfileScreen} />
     <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
+    <ProfileStack.Screen name="JoinedClubs" component={JoinedClubsScreen} />
     <ProfileStack.Screen name="MyApplications" component={MyApplicationsScreen} />
     <ProfileStack.Screen name="ClubApplications" component={ClubApplicationsScreen} />
+    <ProfileStack.Screen name="EventDetail" component={EventDetailScreen} />
+    <ProfileStack.Screen name="EventParticipants" component={EventParticipantsScreen} />
   </ProfileStack.Navigator>
 );
 
@@ -47,7 +50,6 @@ const MainNavigator = () => {
           let icon = '●';
           if (route.name === 'Trang chủ') icon = '🏠';
           if (route.name === 'Sự kiện') icon = '📅';
-          if (route.name === 'Khám phá') icon = '🧭';
           if (route.name === 'Diễn đàn') icon = '💬';
           if (route.name === 'Hồ sơ') icon = '👤';
 
@@ -60,8 +62,11 @@ const MainNavigator = () => {
       })}
     >
       <Tab.Screen name="Trang chủ" component={HomeEntryScreen} />
-      <Tab.Screen name="Sự kiện" component={EventsEntryScreen} />
-      <Tab.Screen name="Khám phá" component={ExploreScreen} />
+      <Tab.Screen 
+        name="Sự kiện" 
+        component={EventsEntryScreen} 
+        options={{ unmountOnBlur: true }}
+      />
       <Tab.Screen name="Diễn đàn" component={ForumScreen} />
       <Tab.Screen name="Hồ sơ" component={ProfileStackNavigator} />
     </Tab.Navigator>
